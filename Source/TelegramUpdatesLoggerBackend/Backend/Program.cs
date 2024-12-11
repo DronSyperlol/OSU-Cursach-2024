@@ -2,6 +2,7 @@ namespace Core
 {
     public class Program
     {
+        public static readonly string ApiVer = "v1";
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +27,7 @@ namespace Core
 
             app.UseAuthorization();
 
-
+            app.UsePathBase("/api/" + ApiVer);
             app.MapControllers();
 
             app.Run();
