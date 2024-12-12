@@ -7,9 +7,10 @@ namespace Backend.Controllers.Acccount
     public class Account : ControllerBase
     {
         [HttpPost("newAccount")]
-        public IActionResult NewAccount()
+        [HttpGet("newAccount")]
+        public string NewAccount()
         {
-
+            return "Hi!";
         }
     }
 }

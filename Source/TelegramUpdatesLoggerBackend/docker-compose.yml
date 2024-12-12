@@ -4,3 +4,5 @@ services:
     build:
       context: .
       dockerfile: Backend/Dockerfile
+    ports:
+      - "5020:8080"
