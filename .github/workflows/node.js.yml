@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     env: 
-      REACT_APP_PATH: ./Source/WebApp/telegram-logger-app
+      REACT_APP_PATH: ./Source/telegram-logger-app
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js 22
