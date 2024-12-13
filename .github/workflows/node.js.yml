@@ -22,9 +22,9 @@ jobs:
       with:
         node-version: 22
         cache: 'npm'
-        cache-dependency-path: $REACT_APP_PATH
+        cache-dependency-path: ${{ env.REACT_APP_PATH }}
     - name: build
-      working-directory: $REACT_APP_PATH
+      working-directory: ${{ env.REACT_APP_PATH }}
       run: |
         npm ci
         npm run build
@@ -32,7 +32,7 @@ jobs:
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
       with:
-        path: $REACT_APP_PATH/build
+        path: ${{ env.REACT_APP_PATH }}/build
  
   deploy:
     needs: build
