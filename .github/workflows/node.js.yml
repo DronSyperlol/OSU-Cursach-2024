@@ -10,10 +10,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  build:      
     runs-on: ubuntu-latest
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    env: 
+      REACT_APP_PATH: ./Source/WebApp/telegram-logger-app
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js 22
@@ -21,9 +22,9 @@ jobs:
       with:
         node-version: 22
         cache: 'npm'
-        cache-dependency-path: './Source/WebApp/telegram-logger-app'
+        cache-dependency-path: $REACT_APP_PATH
     - name: build
-      working-directory: ./my-app
+      working-directory: $REACT_APP_PATH
       run: |
         npm ci
         npm run build
@@ -31,7 +32,7 @@ jobs:
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
       with:
-        path: ./Source/WebApp/telegram-logger-app/build
+        path: $REACT_APP_PATH/build
  
   deploy:
     needs: build
