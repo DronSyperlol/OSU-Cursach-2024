@@ -15,6 +15,7 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     env: 
       REACT_APP_PATH: ./Source/telegram-logger-app
+      CI: false
     environment:
       name: github-pages
     steps:
