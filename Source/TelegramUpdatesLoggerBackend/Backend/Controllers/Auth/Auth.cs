@@ -8,9 +8,9 @@ namespace Backend.Controllers.Auth
     public class Auth : ControllerBase
     {
         [HttpPost("logIn")]
-        public IActionResult LogIn([FromBody] LogInRequest args)
+        public IActionResult LogIn(LogInRequest args)
         {
-            throw new NotImplementedException();
+            return new ObjectResult(new { StatusCode = 200 });
         }
 
         public IActionResult Ping([FromHeader] string session)

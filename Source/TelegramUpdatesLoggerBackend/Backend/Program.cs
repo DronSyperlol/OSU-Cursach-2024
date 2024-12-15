@@ -9,10 +9,19 @@ namespace Core
 
             // Add services to the container.
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(name: "CorsPolicy",
+                                  policy =>
+                                  {
+                                      policy.AllowAnyOrigin()
+                                            .AllowAnyHeader()
+                                            .AllowAnyMethod();
+                                  });
+            });
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -26,7 +35,7 @@ namespace Core
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
+            app.UseCors("CorsPolicy");
             app.UsePathBase("/api/" + ApiVer);
             app.MapControllers();
 

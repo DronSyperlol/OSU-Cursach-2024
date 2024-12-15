@@ -23,10 +23,15 @@ jobs:
         node-version: 22
         cache: 'npm'
         cache-dependency-path: ${{ env.REACT_APP_PATH }}
+    - name: Create .env
+      working-directory: ${{ env.REACT_APP_PATH }}
+      run: |
+        echo "${{ secrets.REACT_ENV }}" > .env
     - name: build
       working-directory: ${{ env.REACT_APP_PATH }}
       run: |
         npm ci
+        
         npm run build
     - name: Upload static files as artifact
       id: deployment
