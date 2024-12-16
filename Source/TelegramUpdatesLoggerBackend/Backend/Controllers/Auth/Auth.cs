@@ -1,4 +1,5 @@
 ﻿using Backend.Controllers.Auth.Requests;
+using Backend.Tools;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers.Auth
@@ -10,6 +11,8 @@ namespace Backend.Controllers.Auth
         [HttpPost("logIn")]
         public IActionResult LogIn(LogInRequest args)
         {
+            var webApp = new WebApp(args.initData);
+
             return new ObjectResult(new { StatusCode = 200 });
         }
 

@@ -11,11 +11,15 @@ function App() {
     </div>));
   
   useEffect(() => {
-    if (window.Telegram === undefined || 
-      window.Telegram.WebApp === undefined || 
-      window.Telegram.WebApp.initData === undefined)
-      window.Telegram.WebApp.initData = process.env.REACT_APP_DEV_INITDATA;
-    http_post(process.env.REACT_APP_BACKEND_URL+"auth/logIn", {initData: window.Telegram.WebApp.initData })
+    const requestData = {};
+    if (window.Telegram.WebApp.initData === ""){
+      requestData["initData"] = process.env.REACT_APP_DEV_INITDATA;
+      console.log(process.env.REACT_APP_DEV_INITDATA)
+    }
+    else {
+      requestData["initData"] = window.Telegram.WebApp.initData;
+    }
+    http_post(process.env.REACT_APP_BACKEND_URL+"auth/logIn", requestData)
     .then(() => {
       setMainPageContent(
         <div className = "LoadedContent">
