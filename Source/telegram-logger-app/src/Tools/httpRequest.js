@@ -35,6 +35,7 @@ export async function http_post(url, params = undefined) {
             } 
         }
         xml.open("POST", url, true);
+        xml.setRequestHeader("Accept", "application/json");
         xml.setRequestHeader("Content-Type", "application/json");
         xml.send(JSON.stringify(params));
     });
