@@ -1,49 +1,56 @@
 import './App.css';
-import { Loading } from './Components/Loading/Loading';
-import { http_post } from './Tools/httpRequest';
-import { useEffect , useState } from 'react';
+import React from 'react';
+import { StartPage } from './Pages/StartPage';
+import { ErrorPage } from './Pages/ErrorPage';
+import Api from './Tools/Api';
 
-function App() {
-  const [mainPageContent, setMainPageContent] = useState((
-    <div className="Loading">
-      <Loading height={250} width={250}/>
-      <p>Загружаю данные...</p>
-    </div>));
+export default class App extends React.Component {
   
-  useEffect(() => {
-    const requestData = {};
-    if (window.Telegram.WebApp.initData === ""){
-      requestData["initData"] = process.env.REACT_APP_DEV_INITDATA;
-      console.log(process.env.REACT_APP_DEV_INITDATA)
-    }
-    else {
-      requestData["initData"] = window.Telegram.WebApp.initData;
-    }
-    http_post(process.env.REACT_APP_BACKEND_URL+"auth/logIn", requestData)
-    .then(() => {
-      setMainPageContent(
-        <div className = "LoadedContent">
-          <h1>HELLO!!!</h1>
-        </div>
-      );
-    })
-    .catch(() => {
-      setMainPageContent(
-        <div className="ErrorView">
-          <h1>ERROR!!!</h1>
-        </div>
-      );
+  static initCalled = false;
+  static pingTimer = undefined;
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      currentPageContent: (<StartPage />)
+    };
+  }
+  
+  drawPage = (pageComponent) => {
+    this.setState({
+      currentPageContent: pageComponent
     });
-    
-  }, []);
+  }
 
-  return (
-    <div className="App">
-        {mainPageContent}
-    </div>
-  );
+  componentDidMount = () => {
+    if (App.initCalled === false) { // Костыль потому что componentDidMount вызывается 2 раза. (Надо исправить)
+                                    // Конструктор кстати тоже вызывается 2 раза 
+      this.init();
+      App.initCalled = true;
+    }
+  }
+
+  render = () => {
+    return (
+      <div className="App">
+          {this.state.currentPageContent}
+      </div>
+    );
+  }
+
+  init = async () => {
+    Api.Auth.logIn()
+      .then(() => {
+        this.drawPage(
+          <div>
+            <h1>Hello!</h1>
+          </div>
+        )
+      })
+      .catch((ex) => {
+        this.drawPage(
+          <ErrorPage description={ex.status + " | " + ex.statusText}/>
+        );
+      });
+  }
 }
-
-
-
-export default App;

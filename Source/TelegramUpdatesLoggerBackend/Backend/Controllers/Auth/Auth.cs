@@ -1,6 +1,9 @@
-﻿using Backend.Controllers.Auth.Requests;
+﻿using Backend.Controllers.Auth.Logic;
+using Backend.Controllers.Auth.Requests;
 using Backend.Tools;
+using Database;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace Backend.Controllers.Auth
 {
@@ -9,14 +12,24 @@ namespace Backend.Controllers.Auth
     public class Auth : ControllerBase
     {
         [HttpPost("logIn")]
-        public IActionResult LogIn(LogInRequest args)
+        public async Task<IActionResult> LogIn(LogInRequest args)
         {
+            ArgumentNullException.ThrowIfNull(args.initData);
+
+            Console.WriteLine("LogIn triggered");
+
             var webApp = new WebApp(args.initData);
+            if (webApp.User == null)
+                BadRequest("Wrong initData!");
+
+            var context = new ApplicationContext();
+            await UserManager.RegisterOrUpdate(context, webApp.User ?? new());
 
             return new ObjectResult(new { StatusCode = 200 });
         }
 
-        public IActionResult Ping([FromHeader] string session)
+        [HttpPost("ping")]
+        public IActionResult Ping()
         {
             throw new NotImplementedException();
         }

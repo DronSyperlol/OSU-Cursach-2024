@@ -1,5 +1,5 @@
-﻿using Config;
-using Core;
+﻿using Backend.Tools.Structs;
+using Config;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,8 +10,8 @@ namespace Backend.Tools
 {
     public class WebApp
     {
-        public Dictionary<string, object>? User;
-        public DateTime? AuthDate;
+        public User? User { get; private set; } = null;
+        public DateTime? AuthDate { get; private set; } = null;
         public WebApp(string initData)
         {
             var data = HttpUtility.ParseQueryString(initData);
@@ -40,11 +40,11 @@ namespace Backend.Tools
                     Encoding.UTF8.GetBytes(dataCheckString)));
 
             if (!resultHash.Equals(reference, StringComparison.OrdinalIgnoreCase))
-            {
                 throw new UnauthorizedAccessException("Wrong hash in initData");
-            }
 
-            User = JsonSerializer.Deserialize<Dictionary<string, object>>(data.Get("user") ?? "{}");
+            var tmpUser = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(data.Get("user") ?? "{}");
+            if (tmpUser != null)
+                User = new User(tmpUser);
             if (int.TryParse(data.Get("auth_date"), out int auth_date))
                 AuthDate = TimeStampConvertor.IntToDatetime(auth_date);
         }
