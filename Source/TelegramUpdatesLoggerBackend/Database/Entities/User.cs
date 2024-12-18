@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Database.Entities
 {
-    public class Users
+    public class User
     {
         public long Id { get; set; } // Вместо AUTO_INCREMENT будут айдишники из телеграма.
         [MaxLength(64)]

@@ -21,7 +21,6 @@ namespace Backend.Controllers.Cors
             Response.Headers.TryAdd("Access-Control-Allow-Headers", "Content-type");
             Response.Headers.TryAdd("Access-Control-Allow-Origin", "*");
             Response.Headers.TryAdd("Access-Control-Max-Age", "5");
-            Console.WriteLine("Handler triggered");
         }
 
         public static async Task InsertHeaders(HttpContext context, Func<Task> next) 

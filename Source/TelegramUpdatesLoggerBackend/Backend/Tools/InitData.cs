@@ -8,11 +8,12 @@ using System.Web;
 
 namespace Backend.Tools
 {
-    public class WebApp
+    public class InitData
     {
         public User? User { get; private set; } = null;
         public DateTime? AuthDate { get; private set; } = null;
-        public WebApp(string initData)
+        public string? Hash { get; private set; } = null;
+        public InitData(string initData)
         {
             var data = HttpUtility.ParseQueryString(initData);
 
@@ -47,6 +48,7 @@ namespace Backend.Tools
                 User = new User(tmpUser);
             if (int.TryParse(data.Get("auth_date"), out int auth_date))
                 AuthDate = TimeStampConvertor.IntToDatetime(auth_date);
+            Hash = data.Get("hash");
         }
     }
 }

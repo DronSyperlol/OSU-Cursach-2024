@@ -1,9 +1,10 @@
 ﻿using Backend.Controllers.Auth.Logic;
 using Backend.Controllers.Auth.Requests;
+using Backend.Controllers.Auth.Response;
 using Backend.Tools;
+using Config;
 using Database;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace Backend.Controllers.Auth
 {
@@ -16,16 +17,29 @@ namespace Backend.Controllers.Auth
         {
             ArgumentNullException.ThrowIfNull(args.initData);
 
-            Console.WriteLine("LogIn triggered");
+            var initData = new InitData(args.initData);
+            if (initData.User == null && initData.AuthDate == null)
+                return BadRequest("Wrong initData!");
 
-            var webApp = new WebApp(args.initData);
-            if (webApp.User == null)
-                BadRequest("Wrong initData!");
+            if (ProgramConfig.DEV == false && 
+                initData.AuthDate!.Value.AddSeconds(10) < DateTime.UtcNow)
+                return BadRequest("initData is too old!");
 
             var context = new ApplicationContext();
-            await UserManager.RegisterOrUpdate(context, webApp.User ?? new());
-
-            return new ObjectResult(new { StatusCode = 200 });
+            try
+            {
+                await UserManager.RegisterOrUpdate(context, initData.User ?? new());
+                string newSession = await SessionManager.CreateNewSession(context, initData);
+                await context.SaveChangesAsync();
+                return new ObjectResult(new LogInResponse() { 
+                    SessionCode = newSession, 
+                    Me = initData.User!.Value
+                });
+            }
+            catch (Exception ex) {
+                Console.Error.WriteLine(ex.ToString());
+                return BadRequest("Something wrong");
+            }
         }
 
         [HttpPost("ping")]
