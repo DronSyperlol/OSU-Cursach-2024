@@ -8,11 +8,12 @@ namespace Database
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Session> Sessions { get; set; }
+        public DbSet<Account> Accounts { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseMySql(
-                ProgramConfig.DatabaseAuth.ConnectionString, 
+                ProgramConfig.DatabaseAuth.ConnectionString,
                 new MySqlServerVersion("1.0"), mySqlOptionsAction =>
                 {
                     mySqlOptionsAction.EnableRetryOnFailure(

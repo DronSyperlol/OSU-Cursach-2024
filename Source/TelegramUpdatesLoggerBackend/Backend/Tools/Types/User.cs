@@ -2,7 +2,7 @@
 
 namespace Backend.Tools.Structs
 {
-    public readonly struct User
+    public class User : ParsebleToDictionaryBase
     {
         public User(Dictionary<string, JsonElement> dict)
         {

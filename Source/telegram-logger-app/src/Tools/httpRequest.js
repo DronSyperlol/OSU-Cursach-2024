@@ -23,7 +23,7 @@ export async function http_get(url, params = undefined) {
 }
 
 
-export async function http_post(url, params = undefined) {
+export async function http_post(url, params = undefined, headers = undefined) {
     return new Promise((resolve, reject) => {
         const xml = new XMLHttpRequest();
         xml.onreadystatechange = function (response) {
@@ -37,6 +37,10 @@ export async function http_post(url, params = undefined) {
         xml.open("POST", url, true);
         xml.setRequestHeader("Accept", "application/json");
         xml.setRequestHeader("Content-Type", "application/json");
+        if (headers !== undefined)
+            for (const [key, value] of Object.entries(headers)) {
+                xml.setRequestHeader(key, value);
+            }
         xml.send(JSON.stringify(params));
     });
 }

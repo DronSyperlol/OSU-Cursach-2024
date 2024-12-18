@@ -9,22 +9,23 @@
 
 namespace Backend.Controllers.Cors
 {
-    [Route("{path}")]
+    [Route("{section}")]
     [ApiController]
     public class CorsResolver : ControllerBase
     {
         [HttpOptions("{methodName}")]
-        public void HandleOptions(string path, string methodName)
+        public void HandleOptions(string section, string methodName)
         {
             Response.StatusCode = 200;
             Response.Headers.TryAdd("Access-Control-Allow-Methods", "POST");
-            Response.Headers.TryAdd("Access-Control-Allow-Headers", "Content-type");
+            Response.Headers.TryAdd("Access-Control-Allow-Headers", "Content-type, userId");
             Response.Headers.TryAdd("Access-Control-Allow-Origin", "*");
             Response.Headers.TryAdd("Access-Control-Max-Age", "5");
         }
 
         public static async Task InsertHeaders(HttpContext context, Func<Task> next) 
         {
+            context.Response.Headers.TryAdd("Access-Control-Allow-Headers", "Content-type, userId");
             context.Response.Headers.TryAdd("Access-Control-Allow-Origin", "*");
             await next.Invoke();
         }

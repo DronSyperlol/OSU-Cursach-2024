@@ -1,3 +1,4 @@
+using Backend.Controllers.Auth;
 using Backend.Controllers.Cors;
 using Database;
 using Microsoft.EntityFrameworkCore;
@@ -14,23 +15,24 @@ namespace Core
 
             // Add services to the container.
 
+            builder.Services.AddDbContext<ApplicationContext>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
 
-            app.UseAuthorization();
-            app.UseHttpsRedirection();
-
             app.UsePathBase("/api/" + ApiVer);
-            app.MapControllers();
-
+            
+            app.UseHttpsRedirection();
+            app.Use(Auth.CustomAuthorization);
             app.Use(CorsResolver.InsertHeaders); // Custom cors
                                                  // Только так у меня получилось протащить заголовки,
                                                  // разрешающие CORS, через прокси keenDNS.
                                                  // При использовании CORS через Services, OPTIONS
                                                  // запросы не проходили из-за чего браузер блокировал
                                                  // ответы.
+            app.MapControllers();
+
             app.Run();
         }
     }

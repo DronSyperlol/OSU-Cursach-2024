@@ -18,17 +18,17 @@ namespace Backend.Controllers.Auth.Logic
             ArgumentNullException.ThrowIfNull(initData.User);
             ArgumentNullException.ThrowIfNull(initData.Hash);
             byte[] sessionCode = HMACSHA256.HashData(
-                Encoding.UTF8.GetBytes(UserManager.GetUniqueCode(initData.User.Value.Id)),
+                Encoding.UTF8.GetBytes(UserManager.GetUniqueCode(initData.User.Id)),
                 Encoding.UTF8.GetBytes(initData.Hash));
             Session? currentSession = await context.Sessions
                 .FirstOrDefaultAsync(s =>
-                    s.ToUser.Id == initData.User.Value.Id &&
+                    s.ToUser.Id == initData.User.Id &&
                     s.Status == Database.Enum.SessionStatus.Active);
             if (currentSession != null) { 
                 currentSession.Status = Database.Enum.SessionStatus.Revoked;
                 currentSession.DiedAt = DateTime.UtcNow;
             }
-            User user = new() { Id = initData.User.Value.Id };
+            User user = new() { Id = initData.User.Id };
             try
             {
                 context.Users.Attach(user);
