@@ -3,7 +3,7 @@ using Backend.Controllers.Cors;
 using Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Core
+namespace Backend
 {
     public class Program
     {
@@ -32,6 +32,8 @@ namespace Core
                                                  // ответы.
             app.Use(Auth.CustomAuthorization);
             app.MapControllers();
+
+            Core.Core.Start();
 
             app.Run();
         }

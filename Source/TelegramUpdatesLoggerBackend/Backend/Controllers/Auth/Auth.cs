@@ -3,8 +3,8 @@ using Backend.Controllers.Auth.Requests;
 using Backend.Controllers.Auth.Response;
 using Backend.Tools;
 using Config;
+using Core.Workers;
 using Database;
-using Database.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
@@ -20,6 +20,8 @@ namespace Backend.Controllers.Auth
         {
             ArgumentNullException.ThrowIfNull(args.initData);
             var initData = new InitData(args.initData);
+            ArgumentNullException.ThrowIfNull(initData.Hash);
+            ArgumentNullException.ThrowIfNull(initData.User);
             if (initData.User == null || initData.AuthDate == null)
                 return BadRequest("Wrong initData!");
             if (ProgramConfig.DEV == false &&
@@ -28,7 +30,7 @@ namespace Backend.Controllers.Auth
             try
             {
                 await UserManager.RegisterOrUpdate(context, initData.User);
-                string newSession = await SessionManager.CreateNewSession(context, initData);
+                string newSession = await SessionManager.OpenNew(context, initData.Hash, initData.User.Id);
                 await context.SaveChangesAsync();
                 var response = new LogInResponse()
                 {
@@ -77,24 +79,9 @@ namespace Backend.Controllers.Auth
                 }
                 if (userId != -1)
                 {
-                    Session? session = null;
-                    try
-                    {
-                        session = await new ApplicationContext().Sessions
-                        .Where(s => s.ToUser.Id == userId && s.Status == Database.Enum.SessionStatus.Active)
-                        .OrderByDescending(s => s.CreatedAt)
-                        .LastAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine(ex.Message);
-                        context.Response.StatusCode = 401;
-                        await context.Response.WriteAsync("Unauthorized");
-                        return;
-                    }
-                    context.Request.Headers.TryAdd("sessionCode", session?.Code ?? "_");
+                    context.Request.Headers.TryAdd("sessionCode", Core.Workers.SessionManager.GetCodeByUser(userId));
                 }
-                if (userId == -1 && (context.Request.Path.Value == null || !context.Request.Path.Value.EndsWith("auth/logIn")))
+                else if (userId == -1 && (context.Request.Path.Value == null || !context.Request.Path.Value.EndsWith("auth/logIn")))
                 {
                     context.Response.StatusCode = 401;
                     await context.Response.WriteAsync("Unauthorized");

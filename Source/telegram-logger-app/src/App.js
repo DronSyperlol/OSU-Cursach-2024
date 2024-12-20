@@ -77,6 +77,6 @@ export default class App extends React.Component {
     App.pingTimer = setInterval(() => {
       Api.Auth.ping(App.apiAuthData)
       .catch((ex) => { console.log(ex); });
-    },55_000);
+    },10_000);
   }
 }
