@@ -8,8 +8,8 @@ namespace Backend.Tools
 {
     public abstract class HttpDataBase : ParsebleToDictionaryBase
     {
-        public string? signature { get; private set; }
-        public long ts { get; private set; }
+        public string? signature { get; set; }
+        public long ts { get; set; }
         public void Sign(long userId, string sessionCode)
         {
             var sortedParams = GetSortedParams();
@@ -26,12 +26,14 @@ namespace Backend.Tools
             if (sessionCode == "_") throw new InvalidOperationException(nameof(sessionCode) + " is empty");
             if (signature == null) throw new InvalidOperationException(nameof(signature) + " is null");
             var sortedParams = GetSortedParams();
-            string dataStr = $"userId:{userId}_ts:{TimeStampConvertor.DatetimeToLong(DateTime.UtcNow)}_";
+            sortedParams.Remove("signature");
+            sortedParams.Remove("ts");
+            string dataStr = $"userId:{userId}_ts:{ts}_";
             dataStr += string.Join("&", sortedParams.Select(item => $"data.{item.Key}={item.Value}"));
             string tmp = Convert.ToHexString(HMACSHA256.HashData(
                 Encoding.UTF8.GetBytes(sessionCode),
                 Encoding.UTF8.GetBytes(dataStr)))!;
-            if (!signature.Equals(tmp)) throw new UnauthorizedAccessException("Signature do not match!");
+            if (!signature.Equals(tmp, StringComparison.OrdinalIgnoreCase)) throw new UnauthorizedAccessException("Signature do not match!");
         }
 
         //  В GetSortedParams надо ключи заполнять с именем корневого объекта.

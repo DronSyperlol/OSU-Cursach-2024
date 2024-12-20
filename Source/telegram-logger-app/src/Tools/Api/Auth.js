@@ -1,4 +1,5 @@
 import { http_post } from "../httpRequest";
+import sign from "../signature";
 
 const apiPath = "auth/"
 
@@ -19,7 +20,9 @@ async function logIn() {
 async function ping(apiAuthData) {
     const methodName = "ping";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
-    var response = await http_post(requestUrl, undefined, {
+    var bodyData = {};
+    sign(bodyData, apiAuthData.userId, apiAuthData.sessionCode);
+    var response = await http_post(requestUrl, bodyData, {
         userId: apiAuthData.userId
     });
     return JSON.parse(response);

@@ -66,9 +66,7 @@ namespace Backend.Controllers.Auth
 
         public static async Task CustomAuthorization(HttpContext context, Func<Task> next)
         {
-            if (context.Request.Method != "POST")
-                await next.Invoke();
-            else
+            if (context.Request.Method == "POST")
             {
                 if (!context.Request.Headers.TryGetValue("userId", out StringValues tmp) ||
                     !long.TryParse(tmp.First(), out long userId))
@@ -77,17 +75,33 @@ namespace Backend.Controllers.Auth
                     await context.Response.WriteAsync("Unauthorized");
                     return;
                 }
-                Session? session = await new ApplicationContext().Sessions
-                    .FirstOrDefaultAsync(s => s.ToUser.Id == userId && s.Status == Database.Enum.SessionStatus.Active);
+                if (userId != -1)
+                {
+                    Session? session = null;
+                    try
+                    {
+                        session = await new ApplicationContext().Sessions
+                        .Where(s => s.ToUser.Id == userId && s.Status == Database.Enum.SessionStatus.Active)
+                        .OrderByDescending(s => s.CreatedAt)
+                        .LastAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine(ex.Message);
+                        context.Response.StatusCode = 401;
+                        await context.Response.WriteAsync("Unauthorized");
+                        return;
+                    }
+                    context.Request.Headers.TryAdd("sessionCode", session?.Code ?? "_");
+                }
                 if (userId == -1 && (context.Request.Path.Value == null || !context.Request.Path.Value.EndsWith("auth/logIn")))
                 {
                     context.Response.StatusCode = 401;
                     await context.Response.WriteAsync("Unauthorized");
                     return;
                 }
-                context.Request.Headers.TryAdd("sessionCode", session?.Code ?? "_");
-                await next.Invoke();
             }
+            await next.Invoke();
         }
     }
 }

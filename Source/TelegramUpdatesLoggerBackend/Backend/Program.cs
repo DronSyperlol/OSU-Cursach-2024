@@ -24,13 +24,13 @@ namespace Core
             app.UsePathBase("/api/" + ApiVer);
             
             app.UseHttpsRedirection();
-            app.Use(Auth.CustomAuthorization);
             app.Use(CorsResolver.InsertHeaders); // Custom cors
                                                  // Только так у меня получилось протащить заголовки,
                                                  // разрешающие CORS, через прокси keenDNS.
                                                  // При использовании CORS через Services, OPTIONS
                                                  // запросы не проходили из-за чего браузер блокировал
                                                  // ответы.
+            app.Use(Auth.CustomAuthorization);
             app.MapControllers();
 
             app.Run();

@@ -5,15 +5,15 @@ import { ErrorPage } from './Pages/ErrorPage';
 import { NewAccountPage } from './Pages/NewAccountPage'
 import Api from './Tools/Api';
 
-const apiAuthData = {
-  sessionCode: "",
-  userId: -1
-};
-
 export default class App extends React.Component {
   
   static initCalled = false;
   static pingTimer = undefined;
+
+  static apiAuthData = {
+    sessionCode: "",
+    userId: -1
+  }
 
   constructor(props) {
     super(props);
@@ -37,14 +37,6 @@ export default class App extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState, snapShot) => {
-    if (prevState.sessionCode !== this.state.sessionCode) {
-      debugger;
-      if (App.pingTimer !== undefined) 
-        clearInterval(App.pingTimer);
-      App.pingTimer = setInterval(() => {
-        Api.Auth.ping(apiAuthData);
-      },55_000);
-    }
   }
 
   render = () => {
@@ -58,9 +50,10 @@ export default class App extends React.Component {
   init = async () => {
     Api.Auth.logIn()
       .then((data) => {
-        apiAuthData.sessionCode = data.sessionCode;
-        apiAuthData.userId = data.me.userId;
-        if (data.accountCount == 0) {
+        App.apiAuthData.sessionCode = data.sessionCode;
+        App.apiAuthData.userId = data.me.id;
+        App.doPing();
+        if (data.accountCount === 0) {
           this.drawPage(<NewAccountPage />);
         }
         else {
@@ -76,5 +69,14 @@ export default class App extends React.Component {
           <ErrorPage description={ex.status + " | " + ex.statusText}/>
         );
       });
+  }
+
+  static doPing() {
+    if (App.pingTimer !== undefined) 
+      clearInterval(App.pingTimer);
+    App.pingTimer = setInterval(() => {
+      Api.Auth.ping(App.apiAuthData)
+      .catch((ex) => { console.log(ex); });
+    },55_000);
   }
 }
