@@ -66,6 +66,7 @@ namespace Backend.Controllers.Auth
             throw new NotImplementedException();
         }
 
+        // Это middleware
         public static async Task CustomAuthorization(HttpContext context, Func<Task> next)
         {
             if (context.Request.Method == "POST")
@@ -79,7 +80,7 @@ namespace Backend.Controllers.Auth
                 }
                 if (userId != -1)
                 {
-                    context.Request.Headers.TryAdd("sessionCode", Core.Workers.SessionManager.GetCodeByUser(userId));
+                    context.Request.Headers.TryAdd("sessionCode", SessionManager.GetCodeByUser(userId));
                 }
                 else if (userId == -1 && (context.Request.Path.Value == null || !context.Request.Path.Value.EndsWith("auth/logIn")))
                 {
