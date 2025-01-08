@@ -2,10 +2,6 @@
 using Core.Interfaces;
 using Core.Types;
 using Database;
-using System.Formats.Asn1;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using TL.Methods;
 
 namespace Core.Workers
 {
@@ -18,7 +14,14 @@ namespace Core.Workers
             throw new NotImplementedException();
         }
         
-        public async Task OpenNewAccount(string phoneNumber)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="phoneNumber"></param>
+        /// <param name="userId"></param>
+        /// <returns>Status</returns>
+        /// <exception cref="Exception"></exception>
+        public static async Task<string> OpenNewAccount(string phoneNumber, long userId)
         {
             LoadedAccount? account = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber);
             if (account != null)
@@ -32,6 +35,7 @@ namespace Core.Workers
                 {
                     Client = new WTelegram.Client(ProgramConfig.TelegramApiAuth.ApiId, ProgramConfig.TelegramApiAuth.ApiHash),
                     PhoneNumber = phoneNumber,
+                    OwnerId = userId
                 };
                 LoadedAccounts.Add(account);
             }
@@ -39,21 +43,39 @@ namespace Core.Workers
             if (account.Status != "verification_code")
                 throw new Exception("Account must be registered!");
             account.Trigger();
+            return account.Status;
         }
 
-        public async Task SetCodeToNewAccount(string phoneNumber, string code)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="phoneNumber"></param>
+        /// <param name="code"></param>
+        /// <returns>Status</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static async Task<string> SetCodeToNewAccount(string phoneNumber, string code)
         {
             LoadedAccount? account = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber)
                 ?? throw new ArgumentNullException($"Can't find account by phone number {phoneNumber}");
             if (account.Status != "verification_code") 
                 throw new InvalidOperationException("Status must be \"verification_code\"");
-            account.Status = await account.Client.Login(phoneNumber);
+            account.Status = await account.Client.Login(code);
+            Console.WriteLine("Current status:" + account.Status);
             account.Trigger();
+            return account.Status;
         }
 
-        public async Task SetCloudPasswordToNewAccount(string phoneNumber, string password)
+        public static async Task<string> SetCloudPasswordToNewAccount(string phoneNumber, string password)
         {
-
+            LoadedAccount? account = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber)
+                ?? throw new ArgumentNullException($"Can't find account by phone number {phoneNumber}");
+            if (account.Status != "password")
+                throw new InvalidOperationException("Status must be \"password\"");
+            account.Status = await account.Client.Login(password);
+            Console.WriteLine("Current status:" + account.Status);
+            account.Trigger();
+            return account.Status;
         }
     }
 }

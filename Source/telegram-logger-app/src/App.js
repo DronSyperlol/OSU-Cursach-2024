@@ -54,7 +54,7 @@ export default class App extends React.Component {
         App.apiAuthData.userId = data.me.id;
         App.doPing();
         if (data.accountCount === 0) {
-          this.drawPage(<NewAccountPage />);
+          this.drawPage(<NewAccountPage api={Api} auth={App.apiAuthData}/>);
         }
         else {
           this.drawPage(

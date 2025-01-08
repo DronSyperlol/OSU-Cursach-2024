@@ -8,6 +8,7 @@ namespace Core.Types
         public required string PhoneNumber { get; set; } // Uses as unique id
         public string Status { get; set; } = "";
         public DateTime LastTrigger { get; set; } = DateTime.UtcNow;
+        public required long OwnerId { get; set; }
         public void Trigger()
         {
             LastTrigger = DateTime.UtcNow;
