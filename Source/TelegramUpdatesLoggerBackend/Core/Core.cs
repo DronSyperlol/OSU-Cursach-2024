@@ -1,4 +1,5 @@
-﻿using Core.Interfaces;
+﻿using Config;
+using Core.Interfaces;
 using Database;
 using System.Reflection;
 
@@ -51,5 +52,10 @@ namespace Core
             _timerTask = null;
             _cancellationTokenSource.Dispose();
         }
+
+        //static void CreateDirs()
+        //{
+        //    Directory.CreateDirectory(ProgramConfig.TelegramApiAuth.SessionsDir);
+        //}
     }
 }

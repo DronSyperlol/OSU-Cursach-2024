@@ -11,6 +11,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+        - ${SESSIONS_DIR_PATH}:/app/sessions
 
   db:
     container_name: telegram-logger-mysql
@@ -24,5 +26,3 @@ services:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
-
-  

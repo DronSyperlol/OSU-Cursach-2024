@@ -2,6 +2,7 @@
 using Core.Interfaces;
 using Core.Types;
 using Database;
+using WTelegram;
 
 namespace Core.Workers
 {
@@ -9,11 +10,27 @@ namespace Core.Workers
     {
         static readonly List<LoadedAccount> LoadedAccounts = [];
 
-        Task IWorker.Handle(ApplicationContext context)
+        async Task IWorker.Handle(ApplicationContext context)
         {
-            throw new NotImplementedException();
+            var triggerDate = DateTime.UtcNow.AddMinutes(-5);
+            var accountToDispose = LoadedAccounts.Where(la => la.IsActive == false && la.LastTrigger < triggerDate);
+            while(accountToDispose.Any())
+            { 
+                var account = accountToDispose.FirstOrDefault();
+                if (account != null)
+                {
+                    await account.Client.DisposeAsync();
+                    LoadedAccounts.Remove(account);
+                    Console.WriteLine($"account {account.PhoneNumber} removed by inactive");
+                }
+            }
         }
-        
+
+        static Client GetNewClient(long userId, string phoneNumber)
+            => new( ProgramConfig.TelegramApiAuth.ApiId,
+                    ProgramConfig.TelegramApiAuth.ApiHash,
+                    ProgramConfig.TelegramApiAuth.SessionsDir + $"{userId}_{phoneNumber}");
+
         /// <summary>
         /// 
         /// </summary>
@@ -27,13 +44,13 @@ namespace Core.Workers
             if (account != null)
             {
                 await account.Client.DisposeAsync();
-                account.Client = new WTelegram.Client(ProgramConfig.TelegramApiAuth.ApiId, ProgramConfig.TelegramApiAuth.ApiHash);
+                account.Client = GetNewClient(userId, phoneNumber);
             }
             else
             {
                 account = new LoadedAccount()
                 {
-                    Client = new WTelegram.Client(ProgramConfig.TelegramApiAuth.ApiId, ProgramConfig.TelegramApiAuth.ApiHash),
+                    Client = GetNewClient(userId, phoneNumber),
                     PhoneNumber = phoneNumber,
                     OwnerId = userId
                 };
@@ -61,7 +78,11 @@ namespace Core.Workers
             if (account.Status != "verification_code") 
                 throw new InvalidOperationException("Status must be \"verification_code\"");
             account.Status = await account.Client.Login(code);
-            Console.WriteLine("Current status:" + account.Status);
+            if (account.Status == "" && account.Client.UserId != 0)
+            {
+                account.Status = "Logged";
+                account.IsActive = true;
+            }
             account.Trigger();
             return account.Status;
         }
@@ -73,7 +94,11 @@ namespace Core.Workers
             if (account.Status != "password")
                 throw new InvalidOperationException("Status must be \"password\"");
             account.Status = await account.Client.Login(password);
-            Console.WriteLine("Current status:" + account.Status);
+            if (account.Status == "" && account.Client.UserId != 0)
+            {
+                account.Status = "Logged";
+                account.IsActive = true;
+            }
             account.Trigger();
             return account.Status;
         }
