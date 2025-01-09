@@ -12,6 +12,7 @@ namespace Backend.Controllers.Acccount
     {
         [HttpPost("newAccount")]
         public async Task<IActionResult> NewAccount(
+            ApplicationContext context,
             [FromBody] NewAccountRequest args,
             [FromHeader] long userId,
             [FromHeader] string sessionCode)
@@ -25,12 +26,12 @@ namespace Backend.Controllers.Acccount
             {
                 return Unauthorized();
             }
-            var status = await AccountManager.OpenNewAccount(args.phone, userId);
+            var status = await AccountManager.OpenNewAccount(context, args.phone, userId);
             var response = new NewAccountResponse()
             {
                 ownerId = userId,
                 phone = args.phone,
-                status  = status,
+                status = status,
             };
             response.Sign(userId, sessionCode);
             return new ObjectResult(response);
@@ -39,9 +40,10 @@ namespace Backend.Controllers.Acccount
 
         [HttpPost("setCode")]
         public async Task<IActionResult> SetCode(
-           [FromBody] SetCodeRequest args,
-           [FromHeader] long userId,
-           [FromHeader] string sessionCode)
+            ApplicationContext context,
+            [FromBody] SetCodeRequest args,
+            [FromHeader] long userId,
+            [FromHeader] string sessionCode)
         {
             ArgumentNullException.ThrowIfNull(args.phone);
             ArgumentNullException.ThrowIfNull(args.code);
@@ -53,7 +55,8 @@ namespace Backend.Controllers.Acccount
             {
                 return Unauthorized();
             }
-            var status = await AccountManager.SetCodeToNewAccount(args.phone, args.code);
+            var status = await AccountManager
+                .SetCodeToNewAccount(context, args.phone, args.code);
             var response = new NewAccountResponse()
             {
                 ownerId = userId,
@@ -63,12 +66,13 @@ namespace Backend.Controllers.Acccount
             response.Sign(userId, sessionCode);
             return new ObjectResult(response);
         }
-        
+
         [HttpPost("setPassword")]
         public async Task<IActionResult> SetPassword(
-           [FromBody] SetPasswordRequest args,
-           [FromHeader] long userId,
-           [FromHeader] string sessionCode)
+            ApplicationContext context,
+            [FromBody] SetPasswordRequest args,
+            [FromHeader] long userId,
+            [FromHeader] string sessionCode)
         {
             ArgumentNullException.ThrowIfNull(args.phone);
             ArgumentNullException.ThrowIfNull(args.password);
@@ -80,7 +84,8 @@ namespace Backend.Controllers.Acccount
             {
                 return Unauthorized();
             }
-            var status = await AccountManager.SetCloudPasswordToNewAccount(args.phone, args.password);
+            var status = await AccountManager
+                .SetCloudPasswordToNewAccount(context, args.phone, args.password);
             var response = new NewAccountResponse()
             {
                 ownerId = userId,

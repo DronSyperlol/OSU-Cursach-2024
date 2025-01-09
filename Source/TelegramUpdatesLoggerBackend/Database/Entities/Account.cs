@@ -10,8 +10,11 @@ namespace Database.Entities
         [NotMapped]
         public long TelegramId { get; set; } // reserved
         [MaxLength(50)]
-        public string SessionFileName { get; set; }
-        public User Owner { get; set; }
+        public required string PhoneNumber { get; set; }
+        public required User Owner { get; set; }
+        public long OwnerId { get; set; }
         public AccountStatus Status { get; set; }
+        public List<AccountLog>? AccountLogs { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

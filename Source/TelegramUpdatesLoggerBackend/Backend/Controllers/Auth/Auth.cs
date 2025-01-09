@@ -36,7 +36,10 @@ namespace Backend.Controllers.Auth
                 {
                     SessionCode = newSession,
                     Me = initData.User,
-                    AccountCount = await context.Accounts.CountAsync(a => a.Owner.Id == initData.User.Id)
+                    AccountCount = await context.Accounts
+                        .CountAsync(a => 
+                            a.Owner.Id == initData.User.Id && 
+                            a.Status == Database.Enum.AccountStatus.Active)
                 };
                 response.Sign(initData.User.Id, newSession);
                 return new ObjectResult(response);

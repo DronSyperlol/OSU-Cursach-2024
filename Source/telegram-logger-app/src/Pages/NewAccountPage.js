@@ -27,7 +27,6 @@ export class NewAccountPage extends React.Component {
           .then((response) => {
             console.log(response);
             if (response.status == "verification_code") {
-              debugger;
               document.getElementById("inputPhone").reset();
               this.setState({currentForm: this.inputCode()});
             }

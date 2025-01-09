@@ -10,6 +10,7 @@ namespace Core.Types
         public DateTime LastTrigger { get; set; } = DateTime.UtcNow;
         public required long OwnerId { get; set; }
         public bool IsActive { get; set; } = false;
+        public long IdInDb { get; set; } = 0;
         public void Trigger()
         {
             LastTrigger = DateTime.UtcNow;

@@ -6,5 +6,6 @@
         Active = 1,
         Broken = 2,
         Closed = 3,
+        Opening = 10,
     }
 }
