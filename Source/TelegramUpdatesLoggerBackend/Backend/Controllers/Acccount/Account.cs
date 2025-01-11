@@ -1,5 +1,7 @@
 ﻿using Backend.Controllers.Acccount.Requests;
 using Backend.Controllers.Acccount.Responses;
+using Backend.Tools;
+using Config;
 using Core.Workers;
 using Database;
 using Microsoft.AspNetCore.Mvc;
@@ -111,6 +113,39 @@ namespace Backend.Controllers.Acccount
                 return Unauthorized();
             }
             throw new NotImplementedException();
+        }
+
+        [HttpPost("getMyAccounts")]
+        public async Task<IActionResult> GetMyAccounts(
+            ApplicationContext context,
+            [FromBody] HttpEmptyData args,
+            [FromHeader] long userId,
+            [FromHeader] string sessionCode)
+        {
+            try
+            {
+                args.Verify(userId, sessionCode);
+            }
+            catch
+            {
+                return Unauthorized();
+            }
+
+            List<Core.Types.AccountInfo> result = [];
+            var accounts = context.Accounts.Where(a => a.OwnerId == userId);
+            foreach (var acc in accounts)
+            {
+                result.Add(new()
+                {
+                    PhoneNumber = acc.PhoneNumber,
+                    PhotoUrl = ProgramConfig.Path.Static + await AccountManager.DownloadMyAvatar(acc.OwnerId, acc.PhoneNumber) + ".jpg",
+                    Title = "title",
+                    Username = "@username"
+                });
+            }
+            var response = new GetMyAccountsResponse() { Accounts = result };
+            response.Sign(userId, sessionCode);
+            return new ObjectResult(response);
         }
     }
 }

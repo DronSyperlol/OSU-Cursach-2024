@@ -7,6 +7,7 @@ namespace Config
         public static string TelegramBotKey { get; }
         public static DatabaseAuth DatabaseAuth { get; }
         public static TelegramApiAuth TelegramApiAuth { get; }
+        public static PathCollection Path { get; } 
 
         public static bool DEV { get; }
 
@@ -26,6 +27,7 @@ namespace Config
                 Environment.GetEnvironmentVariable("API_HASH") ?? "");
 
             DEV = Convert.ToBoolean(Environment.GetEnvironmentVariable("DEV"));
+            Path = new(Environment.GetEnvironmentVariable("BACKEND_FOREIGN_URL") ?? "~");
         }
 
 

@@ -6,14 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using WTelegram;
 using TL;
 using User = Database.Entities.User;
-using Dialog = Core.Types.Dialog;
 
 namespace Core.Workers
 {
     public class AccountManager : IWorker
     {
         static readonly List<LoadedAccount> LoadedAccounts = [];
-        static bool firstTime = false;
 
         async Task IWorker.Handle(ApplicationContext context)
         {
@@ -29,17 +27,29 @@ namespace Core.Workers
                     Console.WriteLine($"account {account.PhoneNumber} removed by inactive");
                 }
             }
-            if (firstTime == false)
-            {
-                var result = GetDialogs(450061304, "79953502896");
-                firstTime = true;
-            }
         }
 
         static Client GetNewClient(long userId, string phoneNumber)
-            => new(ProgramConfig.TelegramApiAuth.ApiId,
-                    ProgramConfig.TelegramApiAuth.ApiHash,
-                    ProgramConfig.TelegramApiAuth.SessionsDir + $"{userId}_{phoneNumber}");
+            => new((what) => what switch
+            {
+                "api_id" => ProgramConfig.TelegramApiAuth.ApiId.ToString(),
+                "api_hash" => ProgramConfig.TelegramApiAuth.ApiHash,
+                "phone_number" => phoneNumber,
+                _ => null
+            });
+            //=> new(ProgramConfig.TelegramApiAuth.ApiId,
+            //        ProgramConfig.TelegramApiAuth.ApiHash,
+            //        ProgramConfig.TelegramApiAuth.SessionsDir + $"{userId}_{phoneNumber}");
+
+        static string get(string what)
+        {
+            return what switch
+            {
+                "sdf" => "sdgwe",
+                "iowetioweut" => "kjasdgjk",
+                _ => "",
+            };
+        }
 
         /// <summary>
         /// 
@@ -264,33 +274,42 @@ namespace Core.Workers
                     OwnerId = userId,
                 };
                 LoadedAccounts.Add(lAcc);
+                await lAcc.Client.LoginUserIfNeeded();
                 lAcc.Status = lAcc.Client.User == null ? LoadedAccount.Statuses.Unknown : LoadedAccount.Statuses.Logged;
             }
             else if (canUpdate)
             {
                 await lAcc.Client.DisposeAsync();
                 lAcc.Client = GetNewClient(userId, phoneNumber);
+                var me = await lAcc.Client.LoginUserIfNeeded();
                 lAcc.Status = lAcc.Client.User == null ? LoadedAccount.Statuses.Unknown : LoadedAccount.Statuses.Logged;
             }
             return lAcc;
         }
 
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="peer"></param>
+        /// <returns>Photo's filename</returns>
         static async Task<string> DownloadAvatar(Client client, IPeerInfo peer)
         {
-            string path = ProgramConfig.TelegramApiAuth.DownloadsDir + "avatar_" + peer.ID;
-            using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
+            string filename = "avatar_" + peer.ID;
+            using var fileStream = new FileStream(ProgramConfig.TelegramApiAuth.DownloadsDir + filename, FileMode.Create, FileAccess.ReadWrite);
             var photoInfo = await client.DownloadProfilePhotoAsync(peer, fileStream);
             fileStream.Close();
-            return path;
+            return filename;
         }
 
-        public static async Task<List<Dialog>> GetDialogs(long userId, string phoneNumber)
+        public static async Task<List<DialogInfo>> GetDialogs(long userId, string phoneNumber)
         {
             const int maxMessagePreview = 50;
             LoadedAccount account = await Starter(userId, phoneNumber);
-            if (account.Status == LoadedAccount.Statuses.Unknown) await account.Client.ConnectAsync();
             var dialogs = await account.Client.Messages_GetDialogs(limit:10);
-            List<Dialog> result = [];
+            List<DialogInfo> result = [];
             foreach (var dialog in dialogs.Dialogs)
             {
                 Message message = (Message)dialogs.Messages.First(m => m.Peer.ID == dialog.Peer.ID);
@@ -298,50 +317,56 @@ namespace Core.Workers
                 {
                     case TL.User user:
                         {
+                            var photoFilename = await DownloadAvatar(account.Client, user);
                             result.Add(new()
                             {
                                 PeerId = user.id,
                                 Title = user.first_name + " " + user.last_name,
                                 TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview-3)]+"..." : message.message,
-                                DialogType = user.IsBot ? Dialog.Types.Bot : Dialog.Types.User
+                                DialogType = user.IsBot ? DialogInfo.Types.Bot : DialogInfo.Types.User,
+                                PhotoUrl = ProgramConfig.Path.Static + photoFilename
                             });
-                            await DownloadAvatar(account.Client, user);
+                            
                         }
                         break;
                     case TL.Chat chat:
                         {
+                            var photoFilename = await DownloadAvatar(account.Client, chat);
                             result.Add(new()
                             {
                                 PeerId = chat.id,
                                 Title = chat.Title,
                                 TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview-3)]+"..." : message.message,
-                                DialogType = Dialog.Types.Chat
+                                DialogType = DialogInfo.Types.Chat,
+                                PhotoUrl = ProgramConfig.Path.Static + photoFilename
                             });
-                            await DownloadAvatar(account.Client, chat);
                         }
                         break;
                     case TL.Channel channel:
                         {
                             
+                            var photoFilename = await DownloadAvatar(account.Client, channel);
                             result.Add(new()
                             {
                                 PeerId = channel.id,
                                 Title = channel.Title,
                                 TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview-3)]+"..." : message.message,
-                                DialogType = Dialog.Types.Channel
+                                DialogType = DialogInfo.Types.Channel,
+                                PhotoUrl = ProgramConfig.Path.Static + photoFilename
                             });
-                            await DownloadAvatar(account.Client, channel);
                         }
                         break;
                 }
-                //if (dialogs.Messages.FirstOrDefault(m => m.Peer.ID == dialog.Peer.ID && m.ID == dialog.TopMessage) is not Message message) continue;
-                //var resolved = ;
-                //Console.WriteLine(resolved.GetType());
-                //string value = $"{dialog.peer.ID} : {dialogs.UserOrChat(dialog).MainUsername} {message.message}";
-                ////Console.WriteLine(value);
-                //result.Add(value);
             }   
             return result;
+        }
+
+        public static async Task<string> DownloadMyAvatar(long userId, string phoneNumber)
+        {
+            LoadedAccount account = await Starter(userId, phoneNumber);
+            if (account.Status == LoadedAccount.Statuses.Logged) 
+                return await DownloadAvatar(account.Client, account.Client.User);
+            return "";
         }
     }
 }

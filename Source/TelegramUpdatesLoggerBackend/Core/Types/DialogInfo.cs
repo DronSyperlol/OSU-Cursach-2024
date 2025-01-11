@@ -1,6 +1,6 @@
 ﻿namespace Core.Types
 {
-    public class Dialog
+    public class DialogInfo
     {
         public long PeerId { get; set; }
         public string Title { get; set; }

@@ -1,5 +1,6 @@
 ﻿#pragma warning disable IDE1006
 
+using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -56,6 +57,16 @@ namespace Backend.Tools
                 string currentKey = parentKey != string.Empty ? $"{parentKey}.{item.Key}" : item.Key;
                 if (item.Value is Dictionary<string, object> dictionary)
                     DefaulTransform(dictionary, currentKey, ref result);
+                else if (item.Value is IList objects)
+                {
+                    var dict = new Dictionary<string, object>();
+                    int index = 0;
+                    foreach (var obj in objects)
+                    {
+                        dict.Add(index++.ToString(), obj);
+                    }
+                    DefaulTransform(dict, currentKey, ref result);
+                }
                 else
                 {
                     try

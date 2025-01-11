@@ -4,6 +4,7 @@ import { StartPage } from './Pages/StartPage';
 import { ErrorPage } from './Pages/ErrorPage';
 import { NewAccountPage } from './Pages/NewAccountPage'
 import Api from './Tools/Api';
+import { AccountsPage } from './Pages/AccountsPage';
 
 export default class App extends React.Component {
   
@@ -57,11 +58,13 @@ export default class App extends React.Component {
           this.drawPage(<NewAccountPage api={Api} auth={App.apiAuthData}/>);
         }
         else {
-          this.drawPage(
-            <div>
-              <h1>TODO...</h1>
-            </div>
-          )
+          Api.Account.getMyAccounts(App.apiAuthData)
+          .then((data) => {
+            console.log(data);
+            this.drawPage(<AccountsPage api={Api} auth={App.apiAuthData} source={data.accounts}/>);
+          }).catch((ex) => {
+            this.drawPage(<ErrorPage description={ex.message}/>);
+          });
         }
       })
       .catch((ex) => {

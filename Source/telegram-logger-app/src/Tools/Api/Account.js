@@ -44,4 +44,15 @@ async function setPassword(apiAuthData, phoneNumber, password) {
     return JSON.parse(response);
 }
 
-export default {newAccount, setCode,setPassword} 
+async function getMyAccounts(apiAuthData) {
+    const methodName = "getMyAccounts";
+    const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
+    var bodyData = {};
+    sign(bodyData, apiAuthData.userId, apiAuthData.sessionCode);
+    var response = await http_post(requestUrl, bodyData, {
+        userId: apiAuthData.userId
+    });
+    return JSON.parse(response);
+}
+
+export default {newAccount, setCode, setPassword, getMyAccounts} 

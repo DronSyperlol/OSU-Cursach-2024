@@ -1,0 +1,22 @@
+
+.accountItem {
+    display: flex;
+    border: 1px solid black;
+    background-color: aquamarine;
+    height: 70px;
+    width: 300px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.accountImage {
+    position: relative;
+    top: 5px;
+    left: 5px;
+}
+
+.accountInfo {
+    margin: auto;
+}
