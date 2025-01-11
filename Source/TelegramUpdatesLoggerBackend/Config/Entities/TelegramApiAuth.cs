@@ -10,5 +10,6 @@
         public int ApiId { get; set; }
         public string ApiHash { get; set; }
         public string SessionsDir { get; set; } = "/app/sessions/";
+        public string DownloadsDir { get; set; } = "/app/downloads/";
     }
 }

@@ -1,17 +1,16 @@
-﻿using Config;
-using Core.Interfaces;
+﻿using Core.Interfaces;
 using Database;
 using System.Reflection;
 
 namespace Core
 {
-    public class Core   //  Класс, отвечающий за таймеры
+    public class CoreMain   //  Класс, отвечающий за таймеры
     {
         static readonly PeriodicTimer _timer;
         static Task? _timerTask;
         static readonly CancellationTokenSource _cancellationTokenSource = new();
         static IWorker[] Workers { get; }
-        static Core()
+        static CoreMain()
         {
             // Получаем все типы наследованные от IWorker
             var workers = Assembly

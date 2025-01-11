@@ -1,4 +1,5 @@
-﻿using WTelegram;
+﻿using TL;
+using WTelegram;
 
 namespace Core.Types
 {
@@ -14,6 +15,14 @@ namespace Core.Types
         public void Trigger()
         {
             LastTrigger = DateTime.UtcNow;
+        }
+
+        public struct Statuses
+        {
+            public const string Unknown = "Unknown";
+            public const string Logged = "Logged in";
+            public const string Code = "verification_code";
+            public const string Password = "password";
         }
     }
 }

@@ -33,7 +33,7 @@ namespace Backend
             app.Use(Auth.CustomAuthorization);
             app.MapControllers();
 
-            Core.Core.Start();
+            Core.CoreMain.Start();
 
             app.Run();
         }

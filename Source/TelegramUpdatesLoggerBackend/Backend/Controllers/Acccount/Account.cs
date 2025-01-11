@@ -95,5 +95,22 @@ namespace Backend.Controllers.Acccount
             response.Sign(userId, sessionCode);
             return new ObjectResult(response);
         }
+
+        [HttpPost("getDialogs")]
+        public async Task<IActionResult> GetDialogs(
+            [FromBody] GetDialogsRequest args,
+            [FromHeader] long userId,
+            [FromHeader] string sessionCode)
+        {
+            try
+            {
+                args.Verify(userId, sessionCode);
+            }
+            catch
+            {
+                return Unauthorized();
+            }
+            throw new NotImplementedException();
+        }
     }
 }
