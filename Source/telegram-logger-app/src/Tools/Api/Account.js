@@ -2,8 +2,14 @@ import { http_post } from "../httpRequest";
 import sign from "../signature";
 
 const apiPath = "account/"
+var apiAuthData = undefined;
 
-async function newAccount(apiAuthData, phoneNumber) {
+function init(AuthData) {
+    if (apiAuthData === undefined) {
+        apiAuthData = AuthData;
+    }
+};
+async function newAccount(phoneNumber) {
     const methodName = "newAccount";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
     var bodyData = {
@@ -16,7 +22,7 @@ async function newAccount(apiAuthData, phoneNumber) {
     return JSON.parse(response);
 }
 
-async function setCode(apiAuthData, phoneNumber, code) {
+async function setCode(phoneNumber, code) {
     const methodName = "setCode";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
     var bodyData = {
@@ -30,7 +36,7 @@ async function setCode(apiAuthData, phoneNumber, code) {
     return JSON.parse(response);
 }
 
-async function setPassword(apiAuthData, phoneNumber, password) {
+async function setPassword(phoneNumber, password) {
     const methodName = "setPassword";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
     var bodyData = {
@@ -44,7 +50,7 @@ async function setPassword(apiAuthData, phoneNumber, password) {
     return JSON.parse(response);
 }
 
-async function getMyAccounts(apiAuthData) {
+async function getMyAccounts() {
     const methodName = "getMyAccounts";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
     var bodyData = {};
@@ -55,4 +61,13 @@ async function getMyAccounts(apiAuthData) {
     return JSON.parse(response);
 }
 
-export default {newAccount, setCode, setPassword, getMyAccounts} 
+const toExport = 
+{
+    init, 
+    newAccount, 
+    setCode, 
+    setPassword, 
+    getMyAccounts
+};
+
+export default toExport

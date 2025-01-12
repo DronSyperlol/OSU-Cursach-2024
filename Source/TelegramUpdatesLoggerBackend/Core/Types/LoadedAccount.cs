@@ -20,10 +20,10 @@ namespace Core.Types
 
         public struct Statuses
         {
-            public const string Unknown = "Unknown";
-            public const string Logged = "Logged in";
-            public const string Code = "verification_code";
-            public const string Password = "password";
+            public static readonly string Unknown = "Unknown";
+            public static readonly string Logged = "Logged in";
+            public static readonly string Code = "verification_code";
+            public static readonly string Password = "password";
         }
     }
 }

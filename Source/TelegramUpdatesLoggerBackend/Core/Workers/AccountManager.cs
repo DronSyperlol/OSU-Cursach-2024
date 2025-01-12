@@ -62,7 +62,7 @@ namespace Core.Workers
             {
                 Console.WriteLine(ex.Message);
             }
-            if (canUpdate)
+            if (canUpdate || lAcc.Status == "")
             {
                 lAcc.Status = lAcc.Client.User == null ? LoadedAccount.Statuses.Unknown : LoadedAccount.Statuses.Logged;
             }
@@ -161,9 +161,9 @@ namespace Core.Workers
             {
                 await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, ex.Message[..512], user);
             }
-            if (lAcc.Status != "verification_code")
+            if (lAcc.Status != LoadedAccount.Statuses.Code)
             {
-                string errorMessage = $"CurrentStatus: {lAcc.Status} but expected \"verification_code\"";
+                string errorMessage = $"CurrentStatus: {lAcc.Status} but expected \"{LoadedAccount.Statuses.Code}\"";
                 await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, errorMessage, user);
                 lAcc.InUse = false;
                 throw new ArgumentException(errorMessage);
@@ -190,10 +190,10 @@ namespace Core.Workers
                 ?? throw new ArgumentNullException(
                     $"Can't find account by phone number {phoneNumber}");
             lAcc.InUse = true;
-            if (lAcc.Status != "verification_code")
+            if (lAcc.Status != LoadedAccount.Statuses.Code)
             {
                 lAcc.InUse = false;
-                throw new InvalidOperationException("Status must be \"verification_code\"");
+                throw new InvalidOperationException($"Status must be \"{LoadedAccount.Statuses.Code}\"");
             }
             var dbAccount = await context.Accounts
                 .Include(a => a.AccountLogs)
@@ -247,10 +247,10 @@ namespace Core.Workers
             LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber)
                 ?? throw new ArgumentNullException($"Can't find account by phone number {phoneNumber}");
             lAcc.InUse = true;
-            if (lAcc.Status != "password")
+            if (lAcc.Status != LoadedAccount.Statuses.Password)
             {
                 lAcc.InUse = false;
-                throw new InvalidOperationException("Status must be \"password\"");
+                throw new InvalidOperationException($"Status must be \"{LoadedAccount.Statuses.Password}\"");
             }
             var dbAccount = await context.Accounts
                 .Include(a => a.AccountLogs)

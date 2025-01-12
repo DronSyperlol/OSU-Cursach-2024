@@ -25,7 +25,7 @@ export class NewAccountPage extends React.Component {
     let handleSend = () => {
       document.getElementById("inputPhone").reset();
       this.setState({currentForm: <Loading height={loadingSize} width={loadingSize} />});
-      this.props.api.Account.newAccount(this.props.auth, this.state.phone)
+      this.props.app.Api.Account.newAccount(this.state.phone)
       .then((response) => {
         console.log(response);
         if (response.status === "verification_code") {
@@ -50,7 +50,7 @@ export class NewAccountPage extends React.Component {
     let handleSend = () => {
       document.getElementById("inputCode").reset();
       this.setState({currentForm: <Loading height={loadingSize} width={loadingSize}/>});
-      this.props.api.Account.setCode(this.props.auth, this.state.phone, this.state.anonymValue)
+      this.props.app.Api.Account.setCode(this.state.phone, this.state.anonymValue)
       .then((response) => {
         console.log(response);
         if (response.status === "password") {
@@ -73,7 +73,7 @@ export class NewAccountPage extends React.Component {
     let handleSend = () => {
       document.getElementById("inputPassword").reset();
       this.setState({currentForm: <Loading height={loadingSize} width={loadingSize}/>});
-      this.props.api.Account.setPassword(this.props.auth, this.state.phone, this.state.anonymValue)
+      this.props.app.Api.Account.setPassword(this.state.phone, this.state.anonymValue)
       .then((response) => {
         console.log(response);
       }).catch(err => {

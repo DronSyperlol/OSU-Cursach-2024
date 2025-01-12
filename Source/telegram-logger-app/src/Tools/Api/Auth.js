@@ -2,6 +2,13 @@ import { http_post } from "../httpRequest";
 import sign from "../signature";
 
 const apiPath = "auth/"
+var apiAuthData = undefined;
+
+function init(AuthData) {
+    if (apiAuthData === undefined) {
+        apiAuthData = AuthData;
+    }
+};
 
 async function logIn() {
     const methodName = "logIn";
@@ -17,7 +24,7 @@ async function logIn() {
     return JSON.parse(response);
 } 
 
-async function ping(apiAuthData) {
+async function ping() {
     const methodName = "ping";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
     var bodyData = {};
@@ -27,5 +34,10 @@ async function ping(apiAuthData) {
     });
     return JSON.parse(response);
 }
-
-export default {logIn, ping} 
+const toExport = 
+{
+    init, 
+    logIn, 
+    ping
+};
+export default  toExport
