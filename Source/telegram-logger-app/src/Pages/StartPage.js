@@ -1,5 +1,5 @@
 import React from "react";
-import { Loading } from "../Components/Loading/Loading";
+import Loading from "../Components/Loading/Loading";
 
 const animationSpeed = 700;
 

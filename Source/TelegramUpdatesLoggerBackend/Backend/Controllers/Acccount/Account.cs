@@ -135,13 +135,11 @@ namespace Backend.Controllers.Acccount
             var accounts = context.Accounts.Where(a => a.OwnerId == userId);
             foreach (var acc in accounts)
             {
-                result.Add(new()
+                var tmp = await AccountManager.GetMe(acc.OwnerId, acc.PhoneNumber);
+                if (tmp != null)
                 {
-                    PhoneNumber = acc.PhoneNumber,
-                    PhotoUrl = ProgramConfig.Path.Static + await AccountManager.DownloadMyAvatar(acc.OwnerId, acc.PhoneNumber) + ".jpg",
-                    Title = "title",
-                    Username = "@username"
-                });
+                    result.Add(tmp);
+                }
             }
             var response = new GetMyAccountsResponse() { Accounts = result };
             response.Sign(userId, sessionCode);

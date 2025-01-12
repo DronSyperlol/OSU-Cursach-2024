@@ -16,7 +16,7 @@ namespace Core.Workers
         async Task IWorker.Handle(ApplicationContext context)
         {
             var triggerDate = DateTime.UtcNow.AddMinutes(-5);
-            var accountToDispose = LoadedAccounts.Where(la => la.IsActive == false && la.LastTrigger < triggerDate);
+            var accountToDispose = LoadedAccounts.Where(la => la.InUse == false && la.LastTrigger < triggerDate);
             while (accountToDispose.Any())
             {
                 var account = accountToDispose.FirstOrDefault();
@@ -30,26 +30,65 @@ namespace Core.Workers
         }
 
         static Client GetNewClient(long userId, string phoneNumber)
+            => new(ProgramConfig.TelegramApiAuth.ApiId,
+                    ProgramConfig.TelegramApiAuth.ApiHash,
+                    ProgramConfig.TelegramApiAuth.SessionsDir + $"{userId}_{phoneNumber}");
+        static Client GetRegisteredClient(long userId, string phoneNumber)
             => new((what) => what switch
             {
                 "api_id" => ProgramConfig.TelegramApiAuth.ApiId.ToString(),
                 "api_hash" => ProgramConfig.TelegramApiAuth.ApiHash,
                 "phone_number" => phoneNumber,
+                "session_pathname" => ProgramConfig.TelegramApiAuth.SessionsDir + $"{userId}_{phoneNumber}",
                 _ => null
             });
-            //=> new(ProgramConfig.TelegramApiAuth.ApiId,
-            //        ProgramConfig.TelegramApiAuth.ApiHash,
-            //        ProgramConfig.TelegramApiAuth.SessionsDir + $"{userId}_{phoneNumber}");
 
-        static string get(string what)
+        static async Task<LoadedAccount> StarterNew(long userId, string phoneNumber)
         {
-            return what switch
-            {
-                "sdf" => "sdgwe",
-                "iowetioweut" => "kjasdgjk",
-                _ => "",
-            };
+            var lAcc = await Starter(GetNewClient, userId, phoneNumber, true);
+            await lAcc.Client.ConnectAsync();
+            lAcc.Status = LoadedAccount.Statuses.Unknown;
+            return lAcc;
         }
+        static async Task<LoadedAccount> StarterExist(long userId, string phoneNumber, bool canUpdate = false)
+        {
+            var lAcc = await Starter(GetRegisteredClient, userId, phoneNumber, canUpdate);
+            try 
+            { 
+                var task = lAcc.Client.LoginUserIfNeeded();
+                task.Wait(10_000);
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine(ex.Message);
+            }
+            if (canUpdate)
+            {
+                lAcc.Status = lAcc.Client.User == null ? LoadedAccount.Statuses.Unknown : LoadedAccount.Statuses.Logged;
+            }
+            return lAcc;
+        }
+        static async Task<LoadedAccount> Starter(Func<long, string, Client> getClient, long userId, string phoneNumber, bool canUpdate)
+        {
+            LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber);
+            if (lAcc == null)
+            {
+                lAcc = new LoadedAccount()
+                {
+                    Client = getClient(userId, phoneNumber),
+                    PhoneNumber = phoneNumber,
+                    OwnerId = userId,
+                };
+                LoadedAccounts.Add(lAcc);
+            }
+            else if (canUpdate)
+            {
+                await lAcc.Client.DisposeAsync();
+                lAcc.Client = getClient(userId, phoneNumber);
+            }
+            return lAcc;
+        }
+
 
         /// <summary>
         /// 
@@ -57,81 +96,80 @@ namespace Core.Workers
         /// <param name="phoneNumber"></param>
         /// <param name="userId"></param>
         /// <returns>Status</returns>
-        /// <exception cref="Exception"></exception>
+        /// <exception cref="AccessViolationException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         public static async Task<string> OpenNewAccount(
             ApplicationContext context,
             string phoneNumber,
             long userId)
         {
-            LoadedAccount lAcc = await Starter(userId, phoneNumber, true);
-            User owner = new() { Id = userId };
-            context.Users.Attach(owner);
+            LoadedAccount? lAcc = null;
             var dbAccount = await context.Accounts
                 .Include(a => a.AccountLogs)
                 .FirstOrDefaultAsync(a => a.PhoneNumber == phoneNumber);
+            if (dbAccount != null)
+            {
+                if (dbAccount.OwnerId != userId)
+                    throw new AccessViolationException(
+                        "You cannot log in to this account because it belongs to another user");
+                lAcc = await StarterExist(userId, phoneNumber);
+                lAcc.InUse = true;
+                if (lAcc.Status == LoadedAccount.Statuses.Logged) // Аккаунт существует, повторный вход не нужен.
+                {
+                    if (dbAccount.Status != Database.Enum.AccountStatus.Active)
+                    {
+                        await AccountDbLog(
+                            context,
+                            dbAccount,
+                            Database.Enum.AccountStatus.Active,
+                            Database.Enum.AccountLogType.Login,
+                            "Login when try login repeate");
+                    }
+                    lAcc.InUse = false;
+                    return lAcc.Status;
+                }
+                else
+                {
+                    await AccountDbLog(
+                        context,
+                        dbAccount,
+                        Database.Enum.AccountStatus.Broken,
+                        Database.Enum.AccountLogType.Broke,
+                        $"Can't start registered account at {DateTime.UtcNow}");
+                }
+            }
+            lAcc = await StarterNew(userId, phoneNumber);
+            User user = new() { Id = userId };
+            context.Users.Attach(user);
             if (dbAccount == null)
             {
                 dbAccount = new()
                 {
-                    Owner = owner,
+                    Owner = user,
                     PhoneNumber = phoneNumber,
-                    Status = Database.Enum.AccountStatus.Opening,
-                    CreatedAt = DateTime.UtcNow,
-                    AccountLogs = []
+                    AccountLogs = [],
                 };
                 await context.Accounts.AddAsync(dbAccount);
             }
-            else
-            {
-                dbAccount.Status = Database.Enum.AccountStatus.Opening;
-            }
+            await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Opening, Database.Enum.AccountLogType.OpenNew, "", user);
             lAcc.IdInDb = dbAccount.Id;
-            dbAccount.AccountLogs!.Add(new()
-            {
-                Account = dbAccount,
-                Type = Database.Enum.AccountLogType.OpenNew,
-                Time = DateTime.UtcNow,
-                ByUser = owner,
-                Description = null,
-            });
-            await context.SaveChangesAsync();
             try
             {
                 lAcc.Status = await lAcc.Client.Login(phoneNumber);
             }
             catch (Exception ex)
             {
-                dbAccount.Status = Database.Enum.AccountStatus.Broken;
-                dbAccount.AccountLogs.Add(new()
-                {
-                    Account = dbAccount,
-                    Type = Database.Enum.AccountLogType.Broke,
-                    Description = ex.Message[..512],
-                    ByUser = owner,
-                    Time = DateTime.UtcNow
-                });
-                await context.SaveChangesAsync();
+                await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, ex.Message[..512], user);
             }
-            if (lAcc.Client.User != null)
+            if (lAcc.Status != "verification_code")
             {
-                dbAccount.Status = Database.Enum.AccountStatus.Active;
-                dbAccount.AccountLogs.Add(new()
-                {
-                    Account = dbAccount,
-                    Type = Database.Enum.AccountLogType.Login,
-                    ByUser = owner,
-                    Time = DateTime.UtcNow
-                });
-                await context.SaveChangesAsync();
-                lAcc.Status = "Logged";
-                lAcc.IsActive = true;
+                string errorMessage = $"CurrentStatus: {lAcc.Status} but expected \"verification_code\"";
+                await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, errorMessage, user);
+                lAcc.InUse = false;
+                throw new ArgumentException(errorMessage);
             }
-            else if (lAcc.Status != "verification_code")
-            {
-                throw new ArgumentException($"CurrentStatus: {lAcc.Status} but expected \"verification_code\"");
-            }
-
             lAcc.Trigger();
+            lAcc.InUse = false;
             return lAcc.Status;
         }
 
@@ -151,22 +189,23 @@ namespace Core.Workers
             LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber)
                 ?? throw new ArgumentNullException(
                     $"Can't find account by phone number {phoneNumber}");
+            lAcc.InUse = true;
             if (lAcc.Status != "verification_code")
+            {
+                lAcc.InUse = false;
                 throw new InvalidOperationException("Status must be \"verification_code\"");
+            }
             var dbAccount = await context.Accounts
                 .Include(a => a.AccountLogs)
-                .FirstOrDefaultAsync(a => a.PhoneNumber == phoneNumber)
-                ?? throw new ArgumentNullException(
-                    $"Can't find account by phone number {phoneNumber}");
-            User owner = new() { Id = lAcc.OwnerId };
-            context.Users.Attach(owner);
-            dbAccount.AccountLogs!.Add(new()
+                .FirstOrDefaultAsync(a => a.PhoneNumber == phoneNumber);
+            if (dbAccount == null)
             {
-                Account = dbAccount,
-                ByUser = owner,
-                Time = DateTime.UtcNow,
-                Type = Database.Enum.AccountLogType.SetCode,
-            });
+                lAcc.InUse = false;
+                throw new ArgumentNullException($"Can't find account in DB by phone number {phoneNumber}");
+            }
+            User user = new() { Id = lAcc.OwnerId };
+            context.Users.Attach(user);
+            await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Opening, Database.Enum.AccountLogType.SetCode, "", user);
             await context.SaveChangesAsync();
             try
             {
@@ -174,35 +213,32 @@ namespace Core.Workers
             }
             catch (Exception ex)
             {
-                dbAccount.Status = Database.Enum.AccountStatus.Broken;
-                dbAccount.AccountLogs.Add(new()
-                {
-                    Account = dbAccount,
-                    Type = Database.Enum.AccountLogType.Broke,
-                    Description = ex.Message[..512],
-                    ByUser = owner,
-                    Time = DateTime.UtcNow
-                });
-                await context.SaveChangesAsync();
+                await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, ex.Message[..512], user);
             }
             if (lAcc.Client.User != null)
             {
-                dbAccount.Status = Database.Enum.AccountStatus.Active;
-                dbAccount.AccountLogs.Add(new()
-                {
-                    Account = dbAccount,
-                    Type = Database.Enum.AccountLogType.Login,
-                    ByUser = owner,
-                    Time = DateTime.UtcNow
-                });
-                await context.SaveChangesAsync();
-                lAcc.Status = "Logged";
-                lAcc.IsActive = true;
+                await AccountDbLog(
+                    context,
+                    dbAccount,
+                    Database.Enum.AccountStatus.Active,
+                    Database.Enum.AccountLogType.Login,
+                    "Login after set code");
+                lAcc.Status = LoadedAccount.Statuses.Logged;
             }
             lAcc.Trigger();
+            lAcc.InUse = false;
             return lAcc.Status;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="phoneNumber"></param>
+        /// <param name="password"></param>
+        /// <returns>Status</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public static async Task<string> SetCloudPasswordToNewAccount(
             ApplicationContext context,
             string phoneNumber,
@@ -210,83 +246,76 @@ namespace Core.Workers
         {
             LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber)
                 ?? throw new ArgumentNullException($"Can't find account by phone number {phoneNumber}");
+            lAcc.InUse = true;
             if (lAcc.Status != "password")
+            {
+                lAcc.InUse = false;
                 throw new InvalidOperationException("Status must be \"password\"");
+            }
             var dbAccount = await context.Accounts
                 .Include(a => a.AccountLogs)
-                .FirstOrDefaultAsync(a => a.PhoneNumber == phoneNumber)
-                ?? throw new ArgumentNullException(
-                    $"Can't find account by phone number {phoneNumber}");
-            User owner = new() { Id = lAcc.OwnerId };
-            context.Users.Attach(owner);
-            dbAccount.AccountLogs!.Add(new()
+                .FirstOrDefaultAsync(a => a.PhoneNumber == phoneNumber);
+            if (dbAccount == null)
             {
-                Account = dbAccount,
-                ByUser = owner,
-                Time = DateTime.UtcNow,
-                Type = Database.Enum.AccountLogType.SetPass,
-            });
-            await context.SaveChangesAsync();
+                lAcc.InUse = false;
+                throw new ArgumentNullException($"Can't find account in DB by phone number {phoneNumber}");
+            }
+            User user = new() { Id = lAcc.OwnerId };
+            context.Users.Attach(user);
+            await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Opening, Database.Enum.AccountLogType.SetPass, "", user);
             try
             {
                 lAcc.Status = await lAcc.Client.Login(password);
             }
             catch (Exception ex)
             {
-                dbAccount.Status = Database.Enum.AccountStatus.Broken;
-                dbAccount.AccountLogs.Add(new()
-                {
-                    Account = dbAccount,
-                    Type = Database.Enum.AccountLogType.Broke,
-                    Description = ex.Message[..512],
-                    ByUser = owner,
-                    Time = DateTime.UtcNow
-                });
-                await context.SaveChangesAsync();
+                await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, ex.Message[..512], user);
             }
             if (lAcc.Client.User != null)
             {
-                dbAccount.Status = Database.Enum.AccountStatus.Active;
-                dbAccount.AccountLogs.Add(new()
-                {
-                    Account = dbAccount,
-                    Type = Database.Enum.AccountLogType.Login,
-                    ByUser = owner,
-                    Time = DateTime.UtcNow
-                });
-                await context.SaveChangesAsync();
-                lAcc.Status = "Logged in";
-                lAcc.IsActive = true;
+                await AccountDbLog(
+                    context,
+                    dbAccount,
+                    Database.Enum.AccountStatus.Active,
+                    Database.Enum.AccountLogType.Login,
+                    "Login after set code");
+                lAcc.Status = LoadedAccount.Statuses.Logged;
             }
             lAcc.Trigger();
+            lAcc.InUse = false;
             return lAcc.Status;
         }
 
-        static async Task<LoadedAccount> Starter(long userId, string phoneNumber, bool canUpdate = false)
+        /// <summary>
+        /// This method writes to the database
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="dbAccount"></param>
+        /// <param name="generalStatus"></param>
+        /// <param name="logType"></param>
+        /// <param name="logDescription"></param>
+        /// <param name="ByUser"></param>
+        /// <returns></returns>
+        static async Task AccountDbLog(
+            ApplicationContext context,
+            Database.Entities.Account dbAccount,
+            Database.Enum.AccountStatus generalStatus,
+            Database.Enum.AccountLogType logType,
+            string logDescription,
+            User? ByUser = null)
         {
-            LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber);
-            if (lAcc == null)
+            dbAccount.Status = generalStatus;
+            dbAccount.AccountLogs ??= [];
+            dbAccount.AccountLogs.Add(new()
             {
-                lAcc = new LoadedAccount()
-                {
-                    Client = GetNewClient(userId, phoneNumber),
-                    PhoneNumber = phoneNumber,
-                    OwnerId = userId,
-                };
-                LoadedAccounts.Add(lAcc);
-                await lAcc.Client.LoginUserIfNeeded();
-                lAcc.Status = lAcc.Client.User == null ? LoadedAccount.Statuses.Unknown : LoadedAccount.Statuses.Logged;
-            }
-            else if (canUpdate)
-            {
-                await lAcc.Client.DisposeAsync();
-                lAcc.Client = GetNewClient(userId, phoneNumber);
-                var me = await lAcc.Client.LoginUserIfNeeded();
-                lAcc.Status = lAcc.Client.User == null ? LoadedAccount.Statuses.Unknown : LoadedAccount.Statuses.Logged;
-            }
-            return lAcc;
+                Account = dbAccount,
+                Type = logType,
+                Time = DateTime.UtcNow,
+                ByUser = ByUser,
+                Description = logDescription,
+            });
+            await context.SaveChangesAsync();
         }
-
 
 
         /// <summary>
@@ -307,8 +336,8 @@ namespace Core.Workers
         public static async Task<List<DialogInfo>> GetDialogs(long userId, string phoneNumber)
         {
             const int maxMessagePreview = 50;
-            LoadedAccount account = await Starter(userId, phoneNumber);
-            var dialogs = await account.Client.Messages_GetDialogs(limit:10);
+            LoadedAccount account = await StarterExist(userId, phoneNumber);
+            var dialogs = await account.Client.Messages_GetDialogs(limit: 10);
             List<DialogInfo> result = [];
             foreach (var dialog in dialogs.Dialogs)
             {
@@ -322,11 +351,11 @@ namespace Core.Workers
                             {
                                 PeerId = user.id,
                                 Title = user.first_name + " " + user.last_name,
-                                TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview-3)]+"..." : message.message,
+                                TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview - 3)] + "..." : message.message,
                                 DialogType = user.IsBot ? DialogInfo.Types.Bot : DialogInfo.Types.User,
                                 PhotoUrl = ProgramConfig.Path.Static + photoFilename
                             });
-                            
+
                         }
                         break;
                     case TL.Chat chat:
@@ -336,7 +365,7 @@ namespace Core.Workers
                             {
                                 PeerId = chat.id,
                                 Title = chat.Title,
-                                TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview-3)]+"..." : message.message,
+                                TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview - 3)] + "..." : message.message,
                                 DialogType = DialogInfo.Types.Chat,
                                 PhotoUrl = ProgramConfig.Path.Static + photoFilename
                             });
@@ -344,29 +373,37 @@ namespace Core.Workers
                         break;
                     case TL.Channel channel:
                         {
-                            
+
                             var photoFilename = await DownloadAvatar(account.Client, channel);
                             result.Add(new()
                             {
                                 PeerId = channel.id,
                                 Title = channel.Title,
-                                TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview-3)]+"..." : message.message,
+                                TopMessage = message.message.Length > maxMessagePreview ? message.message[..(maxMessagePreview - 3)] + "..." : message.message,
                                 DialogType = DialogInfo.Types.Channel,
                                 PhotoUrl = ProgramConfig.Path.Static + photoFilename
                             });
                         }
                         break;
                 }
-            }   
+            }
             return result;
         }
 
-        public static async Task<string> DownloadMyAvatar(long userId, string phoneNumber)
+        public static async Task<AccountInfo?> GetMe(long userId, string phoneNumber)
         {
-            LoadedAccount account = await Starter(userId, phoneNumber);
-            if (account.Status == LoadedAccount.Statuses.Logged) 
-                return await DownloadAvatar(account.Client, account.Client.User);
-            return "";
+            LoadedAccount account = await StarterExist(userId, phoneNumber);
+            if (account.Status == LoadedAccount.Statuses.Logged)
+            {
+                return new()
+                {
+                    PhoneNumber = phoneNumber,
+                    PhotoUrl = ProgramConfig.Path.Static + await DownloadAvatar(account.Client, account.Client.User),
+                    Title = account.Client.User.first_name + " " + account.Client.User.last_name,
+                    Username = account.Client.User.username
+                };
+            }
+            else return null;
         }
     }
 }

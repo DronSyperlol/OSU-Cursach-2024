@@ -1,5 +1,6 @@
 import React from "react";
 import AccountItem from '../Components/AccountItem/AccountItem'
+import plusIcon from '../img/icons8-plus.svg'
 
 export class AccountsPage extends React.Component {
     static initCalled = false;
@@ -10,11 +11,19 @@ export class AccountsPage extends React.Component {
 
     render = () => {
         return (
-        <div>
+        <ul className="account-list">
             {
                 this.props.source.map(x => <AccountItem item={x} />)
             }
-        </div>);
+            <li className="accountItem addNew">
+                <div className="addNewAccountIcon">
+                    <img src={plusIcon}></img>
+                </div>
+                <div className="addNewAccountText">
+                    <span>Добавить новый аккаунт</span>
+                </div>
+            </li>
+        </ul>);
     }
 
     componentDidMount = () => {

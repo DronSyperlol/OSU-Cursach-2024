@@ -8,9 +8,10 @@ namespace Core.Types
         public required Client Client { get; set; }
         public required string PhoneNumber { get; set; } // Uses as unique id
         public string Status { get; set; } = "";
+        public DateTime LoginTime { get; set; } = DateTime.UtcNow;
         public DateTime LastTrigger { get; set; } = DateTime.UtcNow;
         public required long OwnerId { get; set; }
-        public bool IsActive { get; set; } = false;
+        public bool InUse { get; set; } = false;
         public long IdInDb { get; set; } = 0;
         public void Trigger()
         {
