@@ -15,23 +15,12 @@ export default class App extends React.Component {
   }
   static Api = _api;
   static drawPage = undefined;
-  // static switchPage(appObject, pageName) {
-  //   switch (pageName) {
-  //     case "ErrorPage": appObject.drawPage(<ErrorPage />); break;
-  //     case "NewAccountPage": appObject.drawPage(<NewAccountPage />); break;
-  //     case "AccountsPage": appObject.drawPage(<AccountsPage />); break;
-  //     default: appObject.drawPage(<ErrorPage description/>); break;
-  //   }
-  // }
  
   constructor(props) {
     super(props);
     this.state = {
       currentPageContent: (<StartPage />)
     };
-    // App.switchPage = (pageName) => {
-    //   App.switchPage(this, pageName);
-    // }
     App.drawPage = this.drawPage;
   }
   

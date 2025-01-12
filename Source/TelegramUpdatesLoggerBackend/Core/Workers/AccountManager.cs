@@ -333,11 +333,11 @@ namespace Core.Workers
             return filename;
         }
 
-        public static async Task<List<DialogInfo>> GetDialogs(long userId, string phoneNumber)
+        public static async Task<List<DialogInfo>> GetDialogs(long userId, string phoneNumber, int offsetId, int limit)
         {
             const int maxMessagePreview = 50;
             LoadedAccount account = await StarterExist(userId, phoneNumber);
-            var dialogs = await account.Client.Messages_GetDialogs(limit: 10);
+            var dialogs = await account.Client.Messages_GetDialogs(offset_id: offsetId, limit: limit);
             List<DialogInfo> result = [];
             foreach (var dialog in dialogs.Dialogs)
             {

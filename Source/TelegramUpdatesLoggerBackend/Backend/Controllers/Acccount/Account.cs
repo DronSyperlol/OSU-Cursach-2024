@@ -1,7 +1,6 @@
 ﻿using Backend.Controllers.Acccount.Requests;
 using Backend.Controllers.Acccount.Responses;
 using Backend.Tools;
-using Config;
 using Core.Workers;
 using Database;
 using Microsoft.AspNetCore.Mvc;
@@ -98,22 +97,7 @@ namespace Backend.Controllers.Acccount
             return new ObjectResult(response);
         }
 
-        [HttpPost("getDialogs")]
-        public async Task<IActionResult> GetDialogs(
-            [FromBody] GetDialogsRequest args,
-            [FromHeader] long userId,
-            [FromHeader] string sessionCode)
-        {
-            try
-            {
-                args.Verify(userId, sessionCode);
-            }
-            catch
-            {
-                return Unauthorized();
-            }
-            throw new NotImplementedException();
-        }
+        
 
         [HttpPost("getMyAccounts")]
         public async Task<IActionResult> GetMyAccounts(
@@ -130,7 +114,6 @@ namespace Backend.Controllers.Acccount
             {
                 return Unauthorized();
             }
-
             List<Core.Types.AccountInfo> result = [];
             var accounts = context.Accounts.Where(a => a.OwnerId == userId);
             foreach (var acc in accounts)
@@ -141,7 +124,28 @@ namespace Backend.Controllers.Acccount
                     result.Add(tmp);
                 }
             }
-            var response = new GetMyAccountsResponse() { Accounts = result };
+            var response = new GetMyAccountsResponse() { accounts = result };
+            response.Sign(userId, sessionCode);
+            return new ObjectResult(response);
+        }
+
+        [HttpPost("getDialogs")]
+        public async Task<IActionResult> GetDialogs(
+            [FromBody] GetDialogsRequest args,
+            [FromHeader] long userId,
+            [FromHeader] string sessionCode)
+        {
+            ArgumentNullException.ThrowIfNull(nameof(args.phoneNumber));
+            try
+            {
+                args.Verify(userId, sessionCode);
+            }
+            catch
+            {
+                return Unauthorized();
+            }
+            List<Core.Types.DialogInfo> result = await AccountManager.GetDialogs(userId, args.phoneNumber, args.offsetId, args.limit);
+            var response = new GetDialogsResponse() { dialogs = result };
             response.Sign(userId, sessionCode);
             return new ObjectResult(response);
         }

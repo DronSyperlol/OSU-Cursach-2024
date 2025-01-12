@@ -1,0 +1,35 @@
+.dialog-list-grid {
+    display: grid;
+    place-items: center;
+    height: 100vh; /* Занять всю высоту экрана */
+}
+
+.dialog-list {
+    list-style-type: none; 
+    padding: 0;
+}
+
+span {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dialogItem {
+    display: flex;
+    border: 1px solid black;
+    background-color: aquamarine;
+    height: 70px;
+    position: relative;
+    margin: 10px;
+    padding: 10px;
+    align-items: center;
+}
+
+.dialogInfo {
+    padding: 15px;
+    position: relative;
+    text-align: left;
+    font-size: 16px;
+}
+.dialogTitle {
+    font-weight: bold;
+}

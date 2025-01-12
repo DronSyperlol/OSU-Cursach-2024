@@ -61,13 +61,29 @@ async function getMyAccounts() {
     return JSON.parse(response);
 }
 
+async function getDialogs(phoneNumber, offsetId = 0, limit = 10) {
+    const methodName = "getDialogs";
+    const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
+    var bodyData = {
+        phoneNumber,
+        offsetId,
+        limit
+    };
+    sign(bodyData, apiAuthData.userId, apiAuthData.sessionCode);
+    var response = await http_post(requestUrl, bodyData, {
+        userId: apiAuthData.userId
+    });
+    return JSON.parse(response);
+}
+
 const toExport = 
 {
     init, 
     newAccount, 
     setCode, 
     setPassword, 
-    getMyAccounts
+    getMyAccounts,
+    getDialogs
 };
 
 export default toExport

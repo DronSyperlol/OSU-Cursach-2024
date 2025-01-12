@@ -34,9 +34,9 @@ namespace Backend.Controllers.Auth
                 await context.SaveChangesAsync();
                 var response = new LogInResponse()
                 {
-                    SessionCode = newSession,
-                    Me = initData.User,
-                    AccountCount = await context.Accounts
+                    sessionCode = newSession,
+                    me = initData.User,
+                    accountCount = await context.Accounts
                         .CountAsync(a => 
                             a.Owner.Id == initData.User.Id && 
                             a.Status == Database.Enum.AccountStatus.Active)

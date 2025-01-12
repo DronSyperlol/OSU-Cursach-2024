@@ -5,6 +5,6 @@ namespace Backend.Controllers.Acccount.Responses
 {
     public class GetMyAccountsResponse : HttpDataBase
     {
-        public required List<AccountInfo> Accounts { get; set; }
+        public required List<AccountInfo> accounts { get; set; }
     }
 }

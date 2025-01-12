@@ -1,12 +1,7 @@
-ul {
-    position: absolute;
-    left:50%;
-    top:50%;
-    transform: translate(-50%, -50%);
-    padding: 0;
-    align-items: center;
-    justify-content: center;
-    display: flexbox;
+.account-list-grid {
+    display: grid;
+    place-items: center;
+    height: 100vh; /* Занять всю высоту экрана */
 }
 
 span {
@@ -17,26 +12,23 @@ span {
     display: flex;
     border: 1px solid black;
     background-color: aquamarine;
-    height: 110px;
-    width: 400px;
+    height: 100px;
     position: relative;
     margin: 10px;
-    padding: 0;
+    padding: 10px;
+    align-items: center;
 }
 
 .accountImage {
     position: relative;
-    margin: 5px;
 }
 
 .accountInfo {
-    top: 50%;
-    left: 120px;
-    transform: translate(0,-50%);
-    position: absolute;
+    position: relative;
     text-align: left;
     font-size: 24px;
     font-style: normal;
+    padding: 15px;
 }
 .accountTitle {
     height: 10px;
@@ -52,22 +44,17 @@ span {
 }
 
 .accountItem.addNew {
-    height: 75px;
-    width: 360px;
+    margin-top: 15px;
+    height: 70px;
     opacity: 0.6;
     background-color: gray;
-    left: 20px;
+    display: grid;
 }
-.addNewAccountIcon{
-    position: absolute;
-    left: 50%;
-    top: 40%;
-    transform: translate(-50%, -50%);
+
+#addNewAccountIcon {
+    position: relative;
 }
-.addNewAccountText {
-    width: 360px;
-    position: absolute;
-    left: 50%;
-    top: 80%;
-    transform: translate(-50%, -50%);
+
+#addNewAccountText {
+    position: relative;
 }
