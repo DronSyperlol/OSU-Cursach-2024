@@ -4,6 +4,7 @@ using Backend.Tools;
 using Core.Workers;
 using Database;
 using Microsoft.AspNetCore.Mvc;
+using System.Formats.Asn1;
 
 namespace Backend.Controllers.Acccount
 {
@@ -148,6 +149,13 @@ namespace Backend.Controllers.Acccount
             var response = new GetDialogsResponse() { dialogs = result };
             response.Sign(userId, sessionCode);
             return new ObjectResult(response);
+        }
+
+        [HttpPost("getDialogHistory")]
+        public async Task<IActionResult> GetDialog(
+            )
+        {
+            throw new NotImplementedException();
         }
     }
 }

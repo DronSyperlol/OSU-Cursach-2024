@@ -13,7 +13,7 @@ span {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.dialogItem {
+.dialogListItem {
     display: flex;
     border: 1px solid black;
     background-color: aquamarine;
@@ -24,12 +24,31 @@ span {
     align-items: center;
 }
 
+.dialogWatch {
+    margin-right: 15px;
+    left: 15px;
+}
+
+.dialogItem {
+    display: flex;
+    background-color: aquamarine;
+    height: 70px;
+    position: relative;
+    align-items: center;
+}
+
 .dialogInfo {
     padding: 15px;
     position: relative;
     text-align: left;
     font-size: 16px;
 }
+
+.dialogImage {
+    border-radius: 100px;
+    border: 3px solid black;
+}
+
 .dialogTitle {
     font-weight: bold;
 }

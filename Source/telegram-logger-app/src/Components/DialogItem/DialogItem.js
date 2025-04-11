@@ -9,13 +9,16 @@ export default class DialogItem extends react.Component {
     render = () => {
         const avatarSize = 70;
         return (
-            <li className="dialogItem" onClick={() => {this.props.onSelected(this.props.item.peerId)}}>
-                <div className="dialogImage" >
-                    <img height={avatarSize} width={avatarSize} src={this.props.item.photoUrl} alt="avatar"/>
+            <li className="dialogListItem">
+                <div className="dialogWatch" title="Отслеживать этот чат">
+                    <input type="checkbox" onClick={(cb) => this.props.onChecked(cb.currentTarget.checked, this.props.item.peerId)}/>
                 </div>
-                <div className="dialogInfo">
-                    <span className="dialogTitle">{this.props.item.title}</span> <br/>
-                    <span className="dialogTopMessage">{this.props.item.topMessage}</span>
+                <div className="dialogItem" onClick={() => {this.props.onSelected(this.props.item.peerId)}}>
+                    <img className="dialogImage" height={avatarSize} width={avatarSize} src={this.props.item.photoUrl} alt="avatar"/>
+                    <div className="dialogInfo">
+                        <span className="dialogTitle">{this.props.item.title}</span> <br/>
+                        <span className="dialogTopMessage">{this.props.item.topMessage}</span>
+                    </div>
                 </div>
             </li>
         );

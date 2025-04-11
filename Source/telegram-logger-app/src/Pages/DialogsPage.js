@@ -4,16 +4,13 @@ import DialogItem from "../Components/DialogItem/DialogItem";
 export class DialogsPage extends React.Component {
     static initCalled = false;
 
-    // constructor(props) {
-    //     super(props);
-    // }
-
     render = () => {
         return (
         <div className="dialog-list-grid">
+            <h1>Чаты для отслеживания</h1>
             <ul className="dialog-list">
                 {
-                    this.props.source.map(x => <DialogItem item={x} onSelected={this.dialogSelected}/>)
+                    this.props.source.map(x => <DialogItem item={x} onSelected={this.dialogSelected} onChecked={this.dialogChecked}/>)
                 }
             </ul>
         </div>);
@@ -21,5 +18,9 @@ export class DialogsPage extends React.Component {
 
     dialogSelected = (peerId) => {
         console.log(`dialogSelected from ${peerId}`);
+    }
+
+    dialogChecked = (cbState, peerId) => {
+        console.log(`dialogChecked from ${peerId} with cbState: ${cbState}`);
     }
 }
