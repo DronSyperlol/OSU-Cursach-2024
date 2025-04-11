@@ -10,7 +10,7 @@ namespace Core.Types
         public DialogInfo(User reference, string photoFilename, string topMessage)
         {
             PeerId = reference.id;
-            AccessHash = reference.access_hash;
+            AccessHash = reference.access_hash.ToString();
             Title = reference.first_name + " " + reference.last_name;
             TopMessage = topMessage.Length > MAX_MESSAGE_PREVIEW ? topMessage[..(MAX_MESSAGE_PREVIEW - 3)] + "..." : topMessage;
             DialogType = reference.IsBot ? Types.Bot : Types.User;
@@ -28,7 +28,7 @@ namespace Core.Types
         public DialogInfo(Channel reference, string photoFilename, string topMessage)
         {
             PeerId = reference.id;
-            AccessHash = reference.access_hash;
+            AccessHash = reference.access_hash.ToString();
             Title = reference.Title;
             TopMessage = topMessage.Length > MAX_MESSAGE_PREVIEW ? topMessage[..(MAX_MESSAGE_PREVIEW - 3)] + "..." : topMessage;
             DialogType = Types.Channel;
@@ -36,7 +36,7 @@ namespace Core.Types
         }
 
         public long PeerId { get; set; }
-        public long? AccessHash { get; set; }
+        public string? AccessHash { get; set; }
         public string Title { get; set; }
         public string TopMessage { get; set; }
         public bool IsTarget { get; set; }

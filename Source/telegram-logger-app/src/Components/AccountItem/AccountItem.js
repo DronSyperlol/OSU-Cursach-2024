@@ -9,7 +9,7 @@ export default class AccountItem extends react.Component {
     render = () => {
         const avatarSize = 100;
         return (
-            <li className="accountItem" onClick={() => {this.props.onSelected(this.props.item.phoneNumber)}}>
+            <li key={this.props.item.phoneNumber} className="accountItem" onClick={() => {this.props.onSelected(this.props.item.phoneNumber)}}>
                 <div className="accountImage" >
                     <img height={avatarSize} width={avatarSize} src={this.props.item.photoUrl} alt="avatar"/>
                 </div>

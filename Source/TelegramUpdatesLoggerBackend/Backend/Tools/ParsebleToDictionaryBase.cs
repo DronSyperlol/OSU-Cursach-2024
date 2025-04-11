@@ -1,11 +1,14 @@
-﻿namespace Backend.Tools
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
+
+namespace Backend.Tools
 {
     public class ParsebleToDictionaryBase
     {
         public virtual Dictionary<string, object> ToDict()
         {
             var ret = new Dictionary<string, object>();
-            var properties = GetType().GetProperties();
+            var properties = GetType().GetProperties().Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null);
             foreach (var property in properties)
             {
                 object? value = property.GetValue(this);

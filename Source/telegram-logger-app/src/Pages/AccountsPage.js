@@ -13,12 +13,12 @@ export class AccountsPage extends React.Component {
 
     render = () => {
         return (
-        <div className="account-list-grid" >
+        <div className="account-list-grid">
             <ul className="account-list">
                 {
                     this.props.source.map(x => <AccountItem item={x} onSelected={this.accountSelected}/>)
                 }
-                <li className="accountItem addNew" onClick={() => this.props.app.drawPage(<NewAccountPage app={this.props.app}/>)}>
+                <li key="last" className="accountItem addNew" onClick={() => this.props.app.drawPage(<NewAccountPage app={this.props.app}/>)}>
                     <div id="addNewAccountIcon">
                         <img src={plusIcon} alt="add"></img>
                     </div>
@@ -35,7 +35,7 @@ export class AccountsPage extends React.Component {
         this.props.app.Api.Account.getDialogs(phoneNumber)
         .then((response) => {
             console.log(response);
-            this.props.app.drawPage(<DialogsPage app={this.props.app} source={response.dialogs}/>);
+            this.props.app.drawPage(<DialogsPage app={this.props.app} source={response.dialogs} phoneNumber={phoneNumber}/>);
         }).catch((ex) => {
             console.log(ex.message);
         });

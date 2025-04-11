@@ -5,7 +5,6 @@ using Core.Extensions;
 using Core.Workers;
 using Database;
 using Microsoft.AspNetCore.Mvc;
-using System.Formats.Asn1;
 
 namespace Backend.Controllers.Acccount
 {
@@ -110,7 +109,7 @@ namespace Backend.Controllers.Acccount
             [FromHeader] long userId,
             [FromHeader] string sessionCode)
         {
-            ArgumentNullException.ThrowIfNull(nameof(args.phoneNumber));
+            ArgumentNullException.ThrowIfNull(args.phoneNumber);
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
             List<Core.Types.DialogInfo> result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogs(args.offsetId, args.limit);
             var response = new GetDialogsResponse() { dialogs = result };
@@ -119,12 +118,17 @@ namespace Backend.Controllers.Acccount
         }
 
         [HttpPost("getDialogHistory")]
-        public async Task<IActionResult> GetDialog(
+        public async Task<IActionResult> GetDialogHistory(
             [FromBody] GetDialogHistoryRequest args,
             [FromHeader] long userId,
             [FromHeader] string sessionCode
             )
         {
+            ArgumentNullException.ThrowIfNull(args.phoneNumber);
+            ArgumentNullException.ThrowIfNull(args.dialogType);
+            try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
+            var result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogHistory(args.InputPeer, args.offsetId, args.limit);
+
             throw new NotImplementedException();
         }
     }

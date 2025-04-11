@@ -16,8 +16,15 @@ export class DialogsPage extends React.Component {
         </div>);
     }
 
-    dialogSelected = (peerId) => {
-        console.log(`dialogSelected from ${peerId}`);
+    dialogSelected = (sender) => {
+        this.props.app.Api.Account.getDialogHistory(this.props.phoneNumber, sender.dialogType, sender.peerId, sender.accessHash)
+        .then((response) => {
+            console.log(response);
+        })
+        .catch((ex) => {
+            console.log(ex.message)
+        });
+        console.log(`dialogSelected from ${sender.peerId}`);
     }
 
     dialogChecked = (cbState, peerId) => {

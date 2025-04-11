@@ -2,6 +2,8 @@ import { http_post } from "../httpRequest";
 import sign from "../signature";
 
 const apiPath = "account/"
+const defaultLimit = 10;
+
 var apiAuthData = undefined;
 
 function init(AuthData) {
@@ -61,11 +63,29 @@ async function getMyAccounts() {
     return JSON.parse(response);
 }
 
-async function getDialogs(phoneNumber, offsetId = 0, limit = 10) {
+async function getDialogs(phoneNumber, offsetId = 0, limit = defaultLimit) {
     const methodName = "getDialogs";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
     var bodyData = {
         phoneNumber,
+        offsetId,
+        limit
+    };
+    sign(bodyData, apiAuthData.userId, apiAuthData.sessionCode);
+    var response = await http_post(requestUrl, bodyData, {
+        userId: apiAuthData.userId
+    });
+    return JSON.parse(response);
+}
+
+async function getDialogHistory(phoneNumber, dialogType, peerId, accessHash = null, offsetId = 0, limit = defaultLimit) {
+    const methodName = "getDialogHistory";
+    const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;
+    var bodyData = {
+        phoneNumber,
+        dialogType,
+        peerId,
+        accessHash,
         offsetId,
         limit
     };
@@ -83,7 +103,8 @@ const toExport =
     setCode, 
     setPassword, 
     getMyAccounts,
-    getDialogs
+    getDialogs,
+    getDialogHistory
 };
 
 export default toExport

@@ -40,9 +40,23 @@ namespace Core.Extensions
             return result;
         }
 
-        public static async Task<List<object>> GetDialogHistory(this LoadedAccount account, long peerId, InputPeer peer)
+        public static async Task<List<object>> GetDialogHistory(this LoadedAccount account, InputPeer inputPeer, int offsetId, int limit)
         {
-            var history = account.Client.Messages_GetHistory(peer);
+            try
+            {
+                //var dialogs = await account.Client.Messages_GetDialogs(offset_id: peerId, limit: 1);
+                //var inputPeer = dialogs.UserOrChat(dialogs.Dialogs.First()).ToInputPeer();
+                //var history = await account.Client.Messages_GetHistory(inputPeer, offsetId, limit: limit);
+
+                var history = await account.Client.Messages_GetHistory(inputPeer, offsetId, limit: limit);
+                Console.WriteLine(history.Count);
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
             throw new NotImplementedException();
         }
     }
