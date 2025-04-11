@@ -13,7 +13,7 @@ namespace Backend.Controllers.Auth
 {
     [Route("auth")]
     [ApiController]
-    public class Auth : ControllerBase
+    public class AuthController : ControllerBase
     {
         [HttpPost("logIn")]
         public async Task<IActionResult> LogIn([FromBody] LogInRequest args, ApplicationContext context)

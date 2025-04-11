@@ -1,4 +1,6 @@
-﻿using Backend.Tools;
+﻿#pragma warning disable IDE1006
+
+using Backend.Tools;
 using Backend.Tools.Structs;
 
 namespace Backend.Controllers.Auth.Response

@@ -11,7 +11,7 @@ namespace Backend.Controllers.Cors
 {
     [Route("{section}")]
     [ApiController]
-    public class CorsResolver : ControllerBase
+    public class CorsController : ControllerBase
     {
         [HttpOptions("{methodName}")]
         public void HandleOptions(string section, string methodName)

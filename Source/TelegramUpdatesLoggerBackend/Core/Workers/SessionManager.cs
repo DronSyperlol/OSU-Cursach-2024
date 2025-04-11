@@ -10,28 +10,31 @@ namespace Core.Workers
 {
     public class SessionManager : IWorker
     {
-        static readonly List<Types.Session> Sessions = [];
+        static List<Types.Session> Sessions = [];
 
         async Task IWorker.Handle(ApplicationContext context)
         {
             bool needSave = false;
-            foreach (Types.Session session in Sessions.ToArray())
+            List<Types.Session> actual = [];
+            foreach (Types.Session session in Sessions)
             {
                 if (session.LastTrigger.AddSeconds(15) <= DateTime.UtcNow)
                 {
-                    var dbEntity = await context.Sessions
-                        .FirstOrDefaultAsync(s => s.Id == session.Id);
+                    var dbEntity = await context.Sessions.FirstOrDefaultAsync(s => s.Id == session.Id);
                     if (dbEntity != null)
                     {
                         dbEntity.DiedAt = DateTime.UtcNow;
                         dbEntity.Status = Database.Enum.SessionStatus.Died;
                         needSave = true;
                     }
-                    Sessions.Remove(session);
                 }
+                else actual.Add(session);
             }
             if (needSave)
+            {
+                Sessions = actual;
                 await context.SaveChangesAsync();
+            }
         }
 
         public static async Task<string> OpenNew(ApplicationContext context, string hash, long userId)

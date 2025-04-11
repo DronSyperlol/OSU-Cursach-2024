@@ -1,4 +1,6 @@
-﻿namespace Backend.Controllers.Acccount.Responses
+﻿#pragma warning disable IDE1006
+
+namespace Backend.Controllers.Acccount.Responses
 {
     public class SetPasswordResponse : Tools.HttpDataBase
     {

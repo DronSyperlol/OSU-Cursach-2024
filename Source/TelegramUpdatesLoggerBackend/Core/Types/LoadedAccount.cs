@@ -3,7 +3,7 @@ using WTelegram;
 
 namespace Core.Types
 {
-    internal class LoadedAccount
+    public class LoadedAccount
     {
         public required Client Client { get; set; }
         public required string PhoneNumber { get; set; } // Uses as unique id
