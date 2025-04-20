@@ -1,9 +1,11 @@
 ﻿using Database.Enum;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Database.Entities
 {
+    [Index(nameof(PhoneNumber))]
     public class Account
     {
         public long Id { get; set; }

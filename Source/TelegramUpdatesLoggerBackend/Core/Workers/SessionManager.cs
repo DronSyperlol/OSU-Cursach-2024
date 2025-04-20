@@ -53,27 +53,19 @@ namespace Core.Workers
                 if (Sessions.Any(s => s.Id == currentSession.Id))
                     Sessions.Remove(Sessions.First(s => s.Id == currentSession.Id));
             }
-            User user = new() { Id = userId };
-            try
-            {
-                context.Users.Attach(user);
-            }
-            catch
-            {
-                context.Users.Update(user);
-                context.Users.Attach(user);
-            }
+            User user = User.CreateAndAttachOrUpdate(context, userId);
+            var createdAt = DateTime.UtcNow;
             var newSession = new Session()
             {
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = createdAt,
                 Status = Database.Enum.SessionStatus.Active,
                 ToUser = user,
-                DiedAt = null
+                DiedAt = null,
+                Code = Convert.ToBase64String(
+                            HMACSHA256.HashData(
+                                sessionCode,
+                                Encoding.UTF8.GetBytes(createdAt.ToString("dd.MM.yyyy_HH:mm:ffffff")))),
             };
-            newSession.Code = Convert.ToBase64String(
-                HMACSHA256.HashData(
-                    sessionCode,
-                    Encoding.UTF8.GetBytes(newSession.CreatedAt.ToString("dd.MM.yyyy_HH:mm:ffffff"))));
             await context.Sessions.AddAsync(newSession);
             await context.SaveChangesAsync();
             Sessions.Add(new(newSession));

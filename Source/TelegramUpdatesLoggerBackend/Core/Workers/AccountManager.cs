@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using WTelegram;
 using TL;
 using User = Database.Entities.User;
-using System.Threading.Tasks;
 
 namespace Core.Workers
 {
@@ -149,8 +148,7 @@ namespace Core.Workers
                 }
             }
             lAcc = await StarterNew(userId, phoneNumber);
-            User user = new() { Id = userId };
-            context.Users.Attach(user);
+            var user = User.CreateAndAttach(context, userId);
             if (dbAccount == null)
             {
                 dbAccount = new()
@@ -213,8 +211,7 @@ namespace Core.Workers
                 lAcc.InUse = false;
                 throw new ArgumentNullException($"Can't find account in DB by phone number {phoneNumber}");
             }
-            User user = new() { Id = lAcc.OwnerId };
-            context.Users.Attach(user);
+            User user = User.CreateAndAttach(context, lAcc.OwnerId);
             await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Opening, Database.Enum.AccountLogType.SetCode, "", user);
             await context.SaveChangesAsync();
             try
@@ -270,8 +267,7 @@ namespace Core.Workers
                 lAcc.InUse = false;
                 throw new ArgumentNullException($"Can't find account in DB by phone number {phoneNumber}");
             }
-            User user = new() { Id = lAcc.OwnerId };
-            context.Users.Attach(user);
+            User user = User.CreateAndAttach(context, lAcc.OwnerId);
             await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Opening, Database.Enum.AccountLogType.SetPass, "", user);
             try
             {
@@ -314,7 +310,7 @@ namespace Core.Workers
 
         public static async Task<LoadedAccount> Get(long userId, string phoneNumber)
         {
-            LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber);
+            LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber && la.OwnerId == userId);
             lAcc ??= await StarterExist(userId, phoneNumber);
             return lAcc;
         }

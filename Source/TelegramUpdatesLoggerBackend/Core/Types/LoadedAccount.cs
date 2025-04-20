@@ -1,5 +1,4 @@
-﻿using TL;
-using WTelegram;
+﻿using WTelegram;
 
 namespace Core.Types
 {
