@@ -1,5 +1,6 @@
 ﻿#pragma warning disable IDE1006
 
+using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,6 +12,12 @@ namespace Backend.Tools
     {
         public string? signature { get; set; }
         public long ts { get; set; }
+
+        public ObjectResult ToObjectResult()
+        {
+            return new ObjectResult(this);
+        }
+
         public void Sign(long userId, string sessionCode)
         {
             var sortedParams = GetSortedParams();
@@ -39,7 +46,7 @@ namespace Backend.Tools
 
         //  В GetSortedParams надо ключи заполнять с именем корневого объекта.
         //  Пример: { root: { child: "value" } } -> { root.child : "value" }
-        public virtual SortedDictionary<string, object> GetSortedParams()
+        protected virtual SortedDictionary<string, object> GetSortedParams()
         {
             var data = ToDict();
             var ret = new SortedDictionary<string, object>();

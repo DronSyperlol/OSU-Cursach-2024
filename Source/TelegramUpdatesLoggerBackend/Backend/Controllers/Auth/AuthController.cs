@@ -13,7 +13,7 @@ namespace Backend.Controllers.Auth
 {
     [Route("auth")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(ILogger<AuthController> logger ) : ControllerBase
     {
         [HttpPost("logIn")]
         public async Task<IActionResult> LogIn([FromBody] LogInRequest args, ApplicationContext context)
@@ -42,31 +42,25 @@ namespace Backend.Controllers.Auth
                             a.Status == Database.Enum.AccountStatus.Active)
                 };
                 response.Sign(initData.User.Id, newSession);
-                return new ObjectResult(response);
+                return response.ToObjectResult();
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.ToString());
-                return BadRequest("Something wrong");
+                logger.LogError("Unexpected exception when auth/logIn: {ex}", ex);
+                return HttpErrorData.Create();
             }
         }
 
         [HttpPost("ping")]
         public IActionResult Ping([FromBody] HttpEmptyData args, [FromHeader] long userId, [FromHeader] string sessionCode) 
         {
-            try { 
-                args.Verify(userId, sessionCode);
-            }
-            catch
-            {
-                return Unauthorized();
-            } 
-            return new ObjectResult(new HttpEmptyData(userId, sessionCode));
+            try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); } 
+            return new HttpEmptyData(userId, sessionCode).ToObjectResult();
         }
 
-        public IActionResult LogOut([FromHeader] string session)
+        public IActionResult LogOut([FromHeader] long userId, [FromHeader] string session)
         {
-            throw new NotImplementedException();
+            return HttpErrorData.CreateAndSign(System.Net.HttpStatusCode.NotImplemented, "NotImplemented", userId, session);
         }
 
         // Это middleware

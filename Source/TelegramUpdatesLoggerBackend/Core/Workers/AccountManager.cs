@@ -18,27 +18,13 @@ namespace Core.Workers
             var triggerDate = DateTime.UtcNow.AddMinutes(-5);
             List<LoadedAccount> actual = [];
             foreach (var loadedAccount in LoadedAccounts)
-            {
                 if (loadedAccount.InUse == false && loadedAccount.LastTrigger < triggerDate)
-                {
                     await loadedAccount.Client.DisposeAsync();
-
-                }
-                else 
+                else
                     actual.Add(loadedAccount);
-            }
             LoadedAccounts = actual;
-            var accountToDispose = LoadedAccounts.Where(la => la.InUse == false && la.LastTrigger < triggerDate);
-            while (accountToDispose.Any())
-            {
-                var account = accountToDispose.FirstOrDefault();
-                if (account != null)
-                {
-                    await account.Client.DisposeAsync();
-                    LoadedAccounts.Remove(account);
-                }
-            }
         }
+
         static Client GetNewClient(long userId, string phoneNumber)
             => new(ProgramConfig.TelegramApiAuth.ApiId,
                     ProgramConfig.TelegramApiAuth.ApiHash,
@@ -62,12 +48,12 @@ namespace Core.Workers
         static async Task<LoadedAccount> StarterExist(long userId, string phoneNumber, bool canUpdate = false)
         {
             var lAcc = await Starter(GetRegisteredClient, userId, phoneNumber, canUpdate);
-            try 
-            { 
+            try
+            {
                 var task = lAcc.Client.LoginUserIfNeeded();
                 task.Wait(10_000);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
@@ -312,6 +298,7 @@ namespace Core.Workers
         {
             LoadedAccount? lAcc = LoadedAccounts.FirstOrDefault(la => la.PhoneNumber == phoneNumber && la.OwnerId == userId);
             lAcc ??= await StarterExist(userId, phoneNumber);
+            lAcc.Trigger();
             return lAcc;
         }
 

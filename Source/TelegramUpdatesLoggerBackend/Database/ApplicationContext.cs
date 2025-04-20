@@ -10,6 +10,7 @@ namespace Database
         public DbSet<Session> Sessions { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<AccountLog> AccountHistory { get; set; }
+        public DbSet<LoggingTarget> Targets { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

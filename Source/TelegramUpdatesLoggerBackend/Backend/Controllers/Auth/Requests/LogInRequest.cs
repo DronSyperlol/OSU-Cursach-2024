@@ -7,6 +7,5 @@ namespace Backend.Controllers.Auth.Requests
     public class LogInRequest : HttpDataBase
     {
         public string? initData { get; set; }
-
     }
 }

@@ -27,7 +27,14 @@ export class DialogsPage extends React.Component {
         console.log(`dialogSelected from ${sender.peerId}`);
     }
 
-    dialogChecked = (cbState, peerId) => {
+    dialogChecked = (cbState, peerId, accessHash) => {
+        this.props.app.Api.Target.updateTarget(this.props.phoneNumber, peerId, accessHash, cbState)
+        .then((response) => {
+            console.log(response);
+        })
+        .catch((ex) => {
+            console.log(ex.message)
+        });
         console.log(`dialogChecked from ${peerId} with cbState: ${cbState}`);
     }
 }

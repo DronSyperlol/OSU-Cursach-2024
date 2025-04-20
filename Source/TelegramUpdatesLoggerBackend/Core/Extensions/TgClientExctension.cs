@@ -1,6 +1,7 @@
 ﻿using Config;
 using Core.Types;
 using Core.Workers;
+using Database.Enum;
 using TL;
 
 namespace Core.Extensions
@@ -58,6 +59,20 @@ namespace Core.Extensions
                 Console.WriteLine(ex.ToString());
             }
             throw new NotImplementedException();
+        }
+
+        public static InputPeer GetInputPeer(long peerId, long? accessHash)
+        {
+            if (peerId > 0) return new InputPeerUser(peerId, accessHash ?? 0);
+            else if (accessHash == null) return new InputPeerChat(peerId);
+            else return new InputPeerChannel(peerId, accessHash ?? 0);
+        }
+
+        public static LoggingTargetType GetInputPeerType(long peerId)
+        {
+            if (peerId > 0) return LoggingTargetType.User;
+            else if (peerId.ToString().StartsWith("-100")) return LoggingTargetType.Channel;
+            else return LoggingTargetType.Chat;
         }
     }
 }

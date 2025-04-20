@@ -29,7 +29,7 @@ namespace Backend.Controllers.Acccount
                 status = status,
             };
             response.Sign(userId, sessionCode);
-            return new ObjectResult(response);
+            return response.ToObjectResult();
         }
 
 
@@ -52,7 +52,7 @@ namespace Backend.Controllers.Acccount
                 status = status,
             };
             response.Sign(userId, sessionCode);
-            return new ObjectResult(response);
+            return response.ToObjectResult();
         }
 
         [HttpPost("setPassword")]
@@ -75,7 +75,7 @@ namespace Backend.Controllers.Acccount
                 status = status,
             };
             response.Sign(userId, sessionCode);
-            return new ObjectResult(response);
+            return response.ToObjectResult();
         }
 
         
@@ -100,7 +100,7 @@ namespace Backend.Controllers.Acccount
             }
             var response = new GetMyAccountsResponse() { accounts = result };
             response.Sign(userId, sessionCode);
-            return new ObjectResult(response);
+            return response.ToObjectResult();
         }
 
         [HttpPost("getDialogs")]
@@ -114,7 +114,7 @@ namespace Backend.Controllers.Acccount
             List<Core.Types.DialogInfo> result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogs(args.offsetId, args.limit);
             var response = new GetDialogsResponse() { dialogs = result };
             response.Sign(userId, sessionCode);
-            return new ObjectResult(response);
+            return response.ToObjectResult();
         }
 
         [HttpPost("getDialogHistory")]

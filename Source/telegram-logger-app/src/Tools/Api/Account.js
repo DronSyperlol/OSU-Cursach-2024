@@ -11,6 +11,8 @@ function init(AuthData) {
         apiAuthData = AuthData;
     }
 };
+
+// Methods:
 async function newAccount(phoneNumber) {
     const methodName = "newAccount";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;

@@ -10,6 +10,8 @@ function init(AuthData) {
     }
 };
 
+
+// Methods:
 async function logIn() {
     const methodName = "logIn";
     const requestUrl = process.env.REACT_APP_BACKEND_URL+apiPath+methodName;

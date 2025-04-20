@@ -17,7 +17,7 @@ namespace Backend
             // Add services to the container.
 
             builder.Services.AddDbContext<ApplicationContext>();
-            builder.Services.AddSingleton<CoreService>();
+            builder.Services.AddHostedService<CoreService>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 

@@ -1,4 +1,4 @@
-﻿namespace Core.Types
+﻿namespace Core.Workers.Types
 {
     class Session
     {

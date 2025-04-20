@@ -17,6 +17,8 @@ function transformParams(jsonData, parentKey = "", resultObject) {
         let currentKey = parentKey !== "" ? `${parentKey}.${key}` : key;
         if (typeof element === "object")
             transformParams(element, currentKey, resultObject);
+        else if (typeof element === "boolean")
+            resultObject[currentKey] = element ? "True" : "False";
         else
             resultObject[currentKey] = element;
     }
