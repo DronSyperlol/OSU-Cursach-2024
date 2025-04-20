@@ -21,9 +21,18 @@ namespace Core.Services.Types
         readonly InputPeer _peer;
 
         public long AccountId { get => _account.Id; }
+        public long PeerId { get => _peer.ID; }
+
+        public async Task Save()
+        {
+            // TODO сохранение логов
+
+            throw new NotImplementedException();
+        }
 
         public void Dispose()
         {
+            Save();
             _lacc.InUse = false;
         }
 

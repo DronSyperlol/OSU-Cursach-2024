@@ -18,6 +18,7 @@ namespace Backend
 
             builder.Services.AddDbContext<ApplicationContext>();
             builder.Services.AddHostedService<CoreService>();
+            builder.Services.AddHostedService<LoggingService>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 

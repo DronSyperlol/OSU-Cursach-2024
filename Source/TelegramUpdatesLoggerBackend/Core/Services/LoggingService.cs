@@ -33,49 +33,65 @@ namespace Core.Services
 
         readonly Dictionary<long, List<UpdatesLogger>> Loggers = [];
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task Update()
         {
-            InWork = true;
+            if (InWork == false) return;
             using var context = new ApplicationContext();
-            var enabledTargets = context.Targets
+            var enabledTargets = await context.Targets
                 .AsNoTracking()
-                .Include(t => t.FromAccount.PhoneNumber)
+                .Include(t => t.FromAccount)
                 .Where(t => t.Status == Database.Enum.LoggingTargetStatus.Enable)
                 .GroupBy(t => t.FromAccount)
                 .Select(g => new
                 {
                     Account = g.Key,
                     Targets = g.Select(ge => new WatchingTarget(ge.Id, TgClientExctension.GetInputPeer(ge.PeerId, ge.AccessHash)))
-                });
+                }).ToListAsync();
             foreach (var targets in enabledTargets)
             {
                 var lacc = await AccountManager.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
                 List<UpdatesLogger> loggers = [];
+                lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
                 foreach (var target in targets.Targets)
                 {
                     var tmp = new UpdatesLogger(lacc, targets.Account, target.TargetDbId, target.InputPeer);
                     loggers.Add(tmp);
-                    var manager = lacc.Client.WithUpdateManager(
-                        (update) => UpdateHandler(update, tmp));
                 }
                 Loggers.TryAdd(targets.Account.Id, loggers);
             }
         }
 
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            InWork = true;
+            await Update();
+        }
+
         public Task StopAsync(CancellationToken cancellationToken)
         {
             InWork = false;
+            foreach (var item in Loggers)
+            {
+                item.Value.ForEach(l => l.Dispose());
+            }
             return Task.CompletedTask;
         }
 
-        static async Task UpdateHandler(Update update, UpdatesLogger logger)
+        async Task UpdateHandler(Update update, long fromAccountId)
         {
+            Loggers.TryGetValue(fromAccountId, out List<UpdatesLogger>? loggers);
+            if (loggers == null) return;
+            Task? logTask = null;
             switch (update)
             {
-                case UpdateNewMessage unm: await logger.HandleNewMessage(unm); break;
-                case UpdateEditMessage uem: await logger.HandleEditMessage(uem); break;
-                case UpdateDeleteMessages udm: await logger.HandleDeleteMessages(udm); break;
+                case UpdateNewMessage unm: logTask = GetLogger(loggers, unm.message.Peer.ID)?.HandleNewMessage(unm); break;
+                case UpdateEditMessage uem: logTask = GetLogger(loggers, uem.message.Peer.ID)?.HandleEditMessage(uem); break;
+                case UpdateDeleteMessages udm: throw new NotImplementedException();
             }
+            if (logTask != null) await logTask;
         }
+
+        static UpdatesLogger? GetLogger(List<UpdatesLogger> loggers, long peerId)
+            => loggers.FirstOrDefault(l => l.PeerId == peerId);
     }
 }
