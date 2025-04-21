@@ -53,10 +53,6 @@ namespace Core.Services.Types
             {
                 Console.Error.WriteLine(ex.ToString());
             }
-
-            //foreach (var log in LogsToSave)
-            //    if (log.GetType().IsAssignableTo(typeof(UpdateMessageLog)) && ((UpdateMessageLog)log).PrevEdit != null)
-            //        context.UpdatesMessage.Attach(((UpdateMessageLog)log).PrevEdit!);
             await context.Updates.AddRangeAsync([.. logsToSave]);
             await context.SaveChangesAsync();
         }
@@ -108,7 +104,15 @@ namespace Core.Services.Types
         }
         public Task HandleDeleteMessages(UpdateDeleteMessages update)
         {
-            Console.WriteLine($"Deleted messages from {update.messages} (нужно изучить)");
+            foreach (var msgId in update.messages)
+            {
+                UpdatesLogs.Add(new UpdateDeleteMessageLog()
+                {
+                    LoggingTarget = _target,
+                    MessageId = msgId,
+                    Time = DateTime.UtcNow,
+                });
+            }
             return Task.CompletedTask;
         }
 
@@ -124,7 +128,7 @@ namespace Core.Services.Types
                     .Where(l =>
                         l.LoggingTargetId == _target.Id &&
                         l.LoggingTarget.PeerId == PeerId)
-                    .OrderByDescending  (l => l.Time)
+                    .OrderByDescending(l => l.Time)
                     .FirstOrDefaultAsync(l => l.MessageId == messageId);
                 if (prevEdit != null)
                     DetachLocal(context, prevEdit, prevEdit.Id);

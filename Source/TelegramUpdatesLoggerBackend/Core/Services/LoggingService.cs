@@ -112,26 +112,20 @@ namespace Core.Services
             Task? logTask = null;
             switch (update)
             {
-                case UpdateNewMessage unm: logTask = GetLogger(loggers, unm.message.Peer.ID)?.HandleNewMessage(unm); break;
-                case UpdateEditMessage uem: logTask = GetLogger(loggers, uem.message.Peer.ID)?.HandleEditMessage(uem); break;
-                case UpdateDeleteMessages udm:
+                case UpdateNewChannelMessage uncm:
                     {
-                        // TODO... После получения истории сообщений, сравнивать их с ранее сохранённой историей в БД и искать удалённые сообщения
-                        //Task<Messages_MessagesBase>[] tasks;
-                        //Func<InputPeer, Task<Messages_MessagesBase>> getFunc;
-                        //if (udm.messages.Max() == udm.messages.Min()) // udm.messages.Length == 1
-                        //    getFunc = (inputPeer) => loadedAccount.Client.Messages_GetHistory(
-                        //        inputPeer, udm.messages.First(), limit: 1);
-
-                        //else
-                        //    getFunc = (inputPeer) => loadedAccount.Client.Messages_GetHistory(
-                        //                inputPeer, min_id: udm.messages.Min(), max_id: udm.messages.Max());
-                        //tasks = [.. loggers.Select(l => getFunc(l.InputPeer))];
-                        //Task.WaitAll(tasks);
-                         
+                        Console.WriteLine(uncm.GetType().Name);
                     }
                     break;
-
+                case UpdateDeleteChannelMessages udcm:
+                    {
+                        Console.WriteLine(udcm.GetType().Name);
+                    }
+                    break;
+                case UpdateNewMessage unm: logTask = GetLogger(loggers, unm.message.Peer.ID)?.HandleNewMessage(unm); break;
+                case UpdateEditMessage uem: logTask = GetLogger(loggers, uem.message.Peer.ID)?.HandleEditMessage(uem); break;
+                case UpdateDeleteMessages udm: logTask = loggers.FirstOrDefault()?.HandleDeleteMessages(udm); break; // Здесь нам не нужен логгер для конкретного пира
+                                                                                                                     // подробнее: https://t.me/JustDronLife/452 
             }
             if (logTask != null) await logTask;
         }
