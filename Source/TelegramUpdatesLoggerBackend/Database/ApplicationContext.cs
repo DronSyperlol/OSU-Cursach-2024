@@ -25,5 +25,11 @@ namespace Database
                         errorNumbersToAdd: null);
                 });
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<UpdateMessageLog>().ToTable("MessageUpdates");
+            modelBuilder.Entity<UpdateDeleteMessageLog>().ToTable("DeleteMessageUpdates");
+        }
     }
 }

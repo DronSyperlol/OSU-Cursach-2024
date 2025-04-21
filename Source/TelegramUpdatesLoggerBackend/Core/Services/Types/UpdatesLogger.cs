@@ -28,13 +28,13 @@ namespace Core.Services.Types
 
         public async Task Save()
         {
-            List<UpdateLog> LogsToSave;
+            UpdateLog[] LogsToSave;
             lock (UpdatesLogs)
             {
-                LogsToSave = UpdatesLogs;
+                LogsToSave = [.. UpdatesLogs];
                 UpdatesLogs.Clear();
             }
-            if (LogsToSave.Count == 0) return;
+            if (LogsToSave.Length == 0) return;
             using var context = new ApplicationContext();
             context.Targets.Attach(_target);
             await context.Updates.AddRangeAsync([.. LogsToSave]);
@@ -55,7 +55,7 @@ namespace Core.Services.Types
                     UpdatesLogs.Add(new UpdateMessageLog()
                     {
                         LoggingTarget = _target,
-                        Text = msg.ToString(),
+                        Text = msg.message,
                         TextEntities = JsonSerializer.Serialize(msg.entities),
                         MessageId = msg.id,
                         PrevEdit = null,
@@ -75,7 +75,7 @@ namespace Core.Services.Types
                     UpdatesLogs.Add(new UpdateMessageLog()
                     {
                         LoggingTarget = _target,
-                        Text = msg.ToString(),
+                        Text = msg.message,
                         TextEntities = JsonSerializer.Serialize(msg.entities),
                         MessageId = msg.id,
                         PrevEdit = null,

@@ -4,6 +4,7 @@ using Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Database.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20250421210021_UpdateLogs")]
+    partial class UpdateLogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,8 +175,6 @@ namespace Database.Migrations
                     b.HasIndex("LoggingTargetId");
 
                     b.ToTable("Updates");
-
-                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Database.Entities.User", b =>
@@ -204,43 +205,6 @@ namespace Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Database.Entities.UpdateDeleteMessageLog", b =>
-                {
-                    b.HasBaseType("Database.Entities.UpdateLog");
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
-
-                    b.ToTable("DeleteMessageUpdates", (string)null);
-                });
-
-            modelBuilder.Entity("Database.Entities.UpdateMessageLog", b =>
-                {
-                    b.HasBaseType("Database.Entities.UpdateLog");
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("MsgDate")
-                        .HasColumnType("datetime");
-
-                    b.Property<long?>("PrevEditId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(4096)
-                        .HasColumnType("varchar(4096)");
-
-                    b.Property<string>("TextEntities")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasIndex("PrevEditId");
-
-                    b.ToTable("MessageUpdates", (string)null);
                 });
 
             modelBuilder.Entity("Database.Entities.Account", b =>
@@ -302,30 +266,6 @@ namespace Database.Migrations
                         .IsRequired();
 
                     b.Navigation("LoggingTarget");
-                });
-
-            modelBuilder.Entity("Database.Entities.UpdateDeleteMessageLog", b =>
-                {
-                    b.HasOne("Database.Entities.UpdateLog", null)
-                        .WithOne()
-                        .HasForeignKey("Database.Entities.UpdateDeleteMessageLog", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Database.Entities.UpdateMessageLog", b =>
-                {
-                    b.HasOne("Database.Entities.UpdateLog", null)
-                        .WithOne()
-                        .HasForeignKey("Database.Entities.UpdateMessageLog", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Database.Entities.UpdateMessageLog", "PrevEdit")
-                        .WithMany()
-                        .HasForeignKey("PrevEditId");
-
-                    b.Navigation("PrevEdit");
                 });
 
             modelBuilder.Entity("Database.Entities.Account", b =>

@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Database.Entities
 {
-    [Table("MessageUpdates")]
     public class UpdateMessageLog : UpdateLog
     {
         public int MessageId { get; set; }

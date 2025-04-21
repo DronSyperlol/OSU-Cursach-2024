@@ -1,6 +1,6 @@
 ﻿namespace Database.Entities
 {
-    public abstract class UpdateLog
+    public class UpdateLog
     {
         public long Id { get; set; }
         //public UpdateType Type { get; set; } // Не понадобится (скорее всего)

@@ -2,7 +2,6 @@
 
 namespace Database.Entities
 {
-    [Table("DeleteMessageUpdates")]
     public class UpdateDeleteMessageLog : UpdateLog
     {
         public int MessageId { get; set; }
