@@ -1,6 +1,7 @@
 ﻿using Core.Types;
 using Database;
 using Database.Entities;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using TL;
 
@@ -28,22 +29,41 @@ namespace Core.Services.Types
 
         public async Task Save()
         {
-            UpdateLog[] LogsToSave;
+            UpdateLog[] logsToSave;
             lock (UpdatesLogs)
             {
-                LogsToSave = [.. UpdatesLogs];
+                logsToSave = [.. UpdatesLogs];
                 UpdatesLogs.Clear();
             }
-            if (LogsToSave.Length == 0) return;
+            if (logsToSave.Length == 0) return;
             using var context = new ApplicationContext();
-            context.Targets.Attach(_target);
-            await context.Updates.AddRangeAsync([.. LogsToSave]);
+            try
+            {
+                context.Targets.Attach(_target);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.ToString());
+            }
+            try
+            {
+                context.Updates.AttachRange([.. logsToSave.OfType<UpdateMessageLog>().Where(l => l.PrevEdit != null).Select(l => l.PrevEdit!)]);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.ToString());
+            }
+
+            //foreach (var log in LogsToSave)
+            //    if (log.GetType().IsAssignableTo(typeof(UpdateMessageLog)) && ((UpdateMessageLog)log).PrevEdit != null)
+            //        context.UpdatesMessage.Attach(((UpdateMessageLog)log).PrevEdit!);
+            await context.Updates.AddRangeAsync([.. logsToSave]);
             await context.SaveChangesAsync();
         }
 
         public void Dispose()
         {
-            Save();
+            Save().Wait();
             _lacc.InUse = false;
         }
 
@@ -67,7 +87,7 @@ namespace Core.Services.Types
             }
             return Task.CompletedTask;
         }
-        public Task HandleEditMessage(UpdateEditMessage update)
+        public async Task HandleEditMessage(UpdateEditMessage update)
         {
             switch (update.message)
             {
@@ -78,19 +98,50 @@ namespace Core.Services.Types
                         Text = msg.message,
                         TextEntities = JsonSerializer.Serialize(msg.entities),
                         MessageId = msg.id,
-                        PrevEdit = null,
+                        PrevEdit = await GetPrevEdit(msg.id),
                         Time = DateTime.UtcNow,
                         MsgDate = msg.Date
                     });
                     break;
                 default: Console.WriteLine("Unknown type of the message"); break;
             }
-            return Task.CompletedTask;
         }
         public Task HandleDeleteMessages(UpdateDeleteMessages update)
         {
             Console.WriteLine($"Deleted messages from {update.messages} (нужно изучить)");
             return Task.CompletedTask;
+        }
+
+        async Task<UpdateMessageLog?> GetPrevEdit(int messageId)
+        {
+            var prevEdit = UpdatesLogs.OfType<UpdateMessageLog>()
+                .OrderBy(l => l.Time).FirstOrDefault(l => l.MessageId == messageId);
+            if (prevEdit == null)
+            {
+                using var context = new ApplicationContext();
+                prevEdit = await context.UpdatesMessage
+                    .AsNoTracking()
+                    .Where(l =>
+                        l.LoggingTargetId == _target.Id &&
+                        l.LoggingTarget.PeerId == PeerId)
+                    .OrderByDescending  (l => l.Time)
+                    .FirstOrDefaultAsync(l => l.MessageId == messageId);
+                if (prevEdit != null)
+                    DetachLocal(context, prevEdit, prevEdit.Id);
+            }
+            return prevEdit;
+        }
+
+
+        public static void DetachLocal(DbContext context, UpdateLog t, long entryId)
+        {
+            var local = context.Set<UpdateLog>()
+                .Local.FirstOrDefault(entry => entry.Id.Equals(entryId));
+            if (local != null)
+            {
+                context.Entry(local).State = EntityState.Detached;
+            }
+            context.Entry(t).State = EntityState.Modified;
         }
     }
 }

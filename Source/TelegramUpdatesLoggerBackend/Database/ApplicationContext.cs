@@ -12,6 +12,8 @@ namespace Database
         public DbSet<AccountLog> AccountHistory { get; set; }
         public DbSet<LoggingTarget> Targets { get; set; }
         public DbSet<UpdateLog> Updates { get; set; }
+        public DbSet<UpdateMessageLog> UpdatesMessage { get; set; }
+        public DbSet<UpdateDeleteMessageLog> UpdatesDeleteMessage { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
