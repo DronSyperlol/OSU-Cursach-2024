@@ -124,8 +124,18 @@ namespace Core.Services
                     break;
                 case UpdateNewMessage unm: logTask = GetLogger(loggers, unm.message.Peer.ID)?.HandleNewMessage(unm); break;
                 case UpdateEditMessage uem: logTask = GetLogger(loggers, uem.message.Peer.ID)?.HandleEditMessage(uem); break;
-                case UpdateDeleteMessages udm: logTask = loggers.FirstOrDefault()?.HandleDeleteMessages(udm); break; // Здесь нам не нужен логгер для конкретного пира
-                                                                                                                     // подробнее: https://t.me/JustDronLife/452 
+                case UpdateDeleteMessages udm:
+                    {
+                        using var context = new ApplicationContext();
+                        var peerId = (await context.UpdatesMessage
+                            .AsNoTracking()
+                            .Include(u => u.LoggingTarget)
+                            .FirstOrDefaultAsync(u => u.MessageId == udm.messages.First()))
+                            ?.LoggingTarget.PeerId ?? -1;
+                        if (peerId != -1)
+                            logTask = GetLogger(loggers, peerId)?.HandleDeleteMessages(udm);
+                    }
+                    break;
             }
             if (logTask != null) await logTask;
         }

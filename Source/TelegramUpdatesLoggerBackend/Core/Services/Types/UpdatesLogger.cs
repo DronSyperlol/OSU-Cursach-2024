@@ -104,13 +104,14 @@ namespace Core.Services.Types
         }
         public Task HandleDeleteMessages(UpdateDeleteMessages update)
         {
+            var sharedTime = DateTime.UtcNow;
             foreach (var msgId in update.messages)
             {
                 UpdatesLogs.Add(new UpdateDeleteMessageLog()
                 {
                     LoggingTarget = _target,
                     MessageId = msgId,
-                    Time = DateTime.UtcNow,
+                    Time = sharedTime,
                 });
             }
             return Task.CompletedTask;
