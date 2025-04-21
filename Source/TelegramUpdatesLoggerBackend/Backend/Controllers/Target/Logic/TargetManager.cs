@@ -23,7 +23,6 @@ namespace Backend.Controllers.Target.Logic
                     FromAccount = account,
                     PeerId = peerId,
                     Status = enable ? LoggingTargetStatus.Enable : LoggingTargetStatus.Disable,
-                    Type = TgClientExctension.GetInputPeerType(peerId)
                 };
                 await context.Targets.AddAsync(target);
             }

@@ -4,6 +4,8 @@ namespace Config
 {
     public static class ProgramConfig
     {
+        public const int LoggingSaveSec = 5;
+
         public static string TelegramBotKey { get; }
         public static DatabaseAuth DatabaseAuth { get; }
         public static TelegramApiAuth TelegramApiAuth { get; }

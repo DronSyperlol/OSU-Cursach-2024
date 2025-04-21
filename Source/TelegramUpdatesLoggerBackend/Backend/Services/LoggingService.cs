@@ -2,12 +2,9 @@
 
 namespace Backend.Services
 {
-    public class LoggingService : IHostedService
+    public class LoggingService : BackgroundService
     {
-        public async Task StartAsync(CancellationToken cancellationToken)
-            => await Core.Services.LoggingService.Instance.StartAsync(cancellationToken);
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-            => await Core.Services.LoggingService.Instance.StopAsync(cancellationToken);
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+            => await Core.Services.LoggingService.Instance.ExecuteAsync(stoppingToken);
     }
 }

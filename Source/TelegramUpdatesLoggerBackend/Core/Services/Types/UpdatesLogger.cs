@@ -1,33 +1,44 @@
 ﻿using Core.Types;
+using Database;
 using Database.Entities;
+using System.Text.Json;
 using TL;
 
 namespace Core.Services.Types
 {
     class UpdatesLogger : IDisposable
     {
-        readonly List<AccountLog> Logs = [];
-        public UpdatesLogger(LoadedAccount lacc, Account fromAccount, long targetDbId, InputPeer peer)
+        readonly List<UpdateLog> UpdatesLogs = [];
+        public UpdatesLogger(LoadedAccount lacc, Account fromAccount, LoggingTarget target, InputPeer peer)
         {
             _lacc = lacc;
             _lacc.InUse = true;
             _account = fromAccount;
-            _targetDbId = targetDbId;
+            _target = target;
             _peer = peer;
         }
-        readonly long _targetDbId;
+        readonly LoggingTarget _target;
         readonly Account _account;
         readonly LoadedAccount _lacc;
         readonly InputPeer _peer;
 
         public long AccountId { get => _account.Id; }
         public long PeerId { get => _peer.ID; }
+        public InputPeer InputPeer { get => _peer; }
 
         public async Task Save()
         {
-            // TODO сохранение логов
-
-            throw new NotImplementedException();
+            List<UpdateLog> LogsToSave;
+            lock (UpdatesLogs)
+            {
+                LogsToSave = UpdatesLogs;
+                UpdatesLogs.Clear();
+            }
+            if (LogsToSave.Count == 0) return;
+            using var context = new ApplicationContext();
+            context.Targets.Attach(_target);
+            await context.Updates.AddRangeAsync([.. LogsToSave]);
+            await context.SaveChangesAsync();
         }
 
         public void Dispose()
@@ -40,7 +51,18 @@ namespace Core.Services.Types
         {
             switch (update.message)
             {
-                case Message msg: Console.WriteLine($"New message {msg.id} from {msg.from_id} to {msg.peer_id}: {msg.message}"); break;
+                case Message msg:
+                    UpdatesLogs.Add(new UpdateMessageLog()
+                    {
+                        LoggingTarget = _target,
+                        Text = msg.ToString(),
+                        TextEntities = JsonSerializer.Serialize(msg.entities),
+                        MessageId = msg.id,
+                        PrevEdit = null,
+                        Time = DateTime.UtcNow,
+                        MsgDate = msg.Date
+                    });
+                    break;
                 default: Console.WriteLine("Unknown type of the message"); break;
             }
             return Task.CompletedTask;
@@ -49,7 +71,18 @@ namespace Core.Services.Types
         {
             switch (update.message)
             {
-                case Message msg: Console.WriteLine($"Edit message {msg.id} from {msg.from_id} to {msg.peer_id}: {msg.message}"); break;
+                case Message msg:
+                    UpdatesLogs.Add(new UpdateMessageLog()
+                    {
+                        LoggingTarget = _target,
+                        Text = msg.ToString(),
+                        TextEntities = JsonSerializer.Serialize(msg.entities),
+                        MessageId = msg.id,
+                        PrevEdit = null,
+                        Time = DateTime.UtcNow,
+                        MsgDate = msg.Date
+                    });
+                    break;
                 default: Console.WriteLine("Unknown type of the message"); break;
             }
             return Task.CompletedTask;

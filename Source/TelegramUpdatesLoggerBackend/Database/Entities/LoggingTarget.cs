@@ -14,6 +14,7 @@ namespace Database.Entities
         public required long? AccessHash { get; set; }
         public LoggingTargetType Type { get; set; }
         public LoggingTargetStatus Status { get; set; }
+        public List<UpdateLog> Logs { get; set; } = [];
         [MaxLength(100)]
         public string? Error { get; set; } = null; // not null when status is Failure (-1)
     }

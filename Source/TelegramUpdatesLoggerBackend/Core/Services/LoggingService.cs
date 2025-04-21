@@ -1,5 +1,7 @@
-﻿using Core.Extensions;
+﻿using Config;
+using Core.Extensions;
 using Core.Services.Types;
+using Core.Types;
 using Core.Workers;
 using Database;
 using Microsoft.EntityFrameworkCore;
@@ -45,29 +47,55 @@ namespace Core.Services
                 .Select(g => new
                 {
                     Account = g.Key,
-                    Targets = g.Select(ge => new WatchingTarget(ge.Id, TgClientExctension.GetInputPeer(ge.PeerId, ge.AccessHash)))
+                    Targets = g.Select(ge => new
+                    {
+                        Target = ge,
+                        InputPeer = TgClientExctension.GetInputPeer(ge.PeerId, ge.AccessHash)
+                    })
                 }).ToListAsync();
             foreach (var targets in enabledTargets)
             {
                 var lacc = await AccountManager.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
                 List<UpdatesLogger> loggers = [];
-                lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
+                lacc.Client.WithUpdateManager((update) => UpdateHandler(update, lacc, targets.Account.Id));
                 foreach (var target in targets.Targets)
                 {
-                    var tmp = new UpdatesLogger(lacc, targets.Account, target.TargetDbId, target.InputPeer);
+                    var tmp = new UpdatesLogger(lacc, targets.Account, target.Target, target.InputPeer);
                     loggers.Add(tmp);
                 }
                 Loggers.TryAdd(targets.Account.Id, loggers);
             }
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            var timer = new PeriodicTimer(TimeSpan.FromSeconds(ProgramConfig.LoggingSaveSec));
+            try
+            {
+                await StartAsync(stoppingToken);
+                while (await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    foreach (var item in Loggers)
+                    {
+                        Task[] tasks = [.. item.Value.Select(l => l.Save())];
+                        foreach (var task in tasks)
+                            await task;
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                await StopAsync();
+            }
+        }
+
+        async Task StartAsync(CancellationToken cancellationToken)
         {
             InWork = true;
             await Update();
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        Task StopAsync()
         {
             InWork = false;
             foreach (var item in Loggers)
@@ -77,7 +105,7 @@ namespace Core.Services
             return Task.CompletedTask;
         }
 
-        async Task UpdateHandler(Update update, long fromAccountId)
+        async Task UpdateHandler(Update update, LoadedAccount loadedAccount, long fromAccountId)
         {
             Loggers.TryGetValue(fromAccountId, out List<UpdatesLogger>? loggers);
             if (loggers == null) return;
@@ -86,7 +114,24 @@ namespace Core.Services
             {
                 case UpdateNewMessage unm: logTask = GetLogger(loggers, unm.message.Peer.ID)?.HandleNewMessage(unm); break;
                 case UpdateEditMessage uem: logTask = GetLogger(loggers, uem.message.Peer.ID)?.HandleEditMessage(uem); break;
-                case UpdateDeleteMessages udm: throw new NotImplementedException();
+                case UpdateDeleteMessages udm:
+                    {
+                        // TODO... После получения истории сообщений, сравнивать их с ранее сохранённой историей в БД и искать удалённые сообщения
+                        //Task<Messages_MessagesBase>[] tasks;
+                        //Func<InputPeer, Task<Messages_MessagesBase>> getFunc;
+                        //if (udm.messages.Max() == udm.messages.Min()) // udm.messages.Length == 1
+                        //    getFunc = (inputPeer) => loadedAccount.Client.Messages_GetHistory(
+                        //        inputPeer, udm.messages.First(), limit: 1);
+
+                        //else
+                        //    getFunc = (inputPeer) => loadedAccount.Client.Messages_GetHistory(
+                        //                inputPeer, min_id: udm.messages.Min(), max_id: udm.messages.Max());
+                        //tasks = [.. loggers.Select(l => getFunc(l.InputPeer))];
+                        //Task.WaitAll(tasks);
+                         
+                    }
+                    break;
+
             }
             if (logTask != null) await logTask;
         }

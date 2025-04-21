@@ -9,7 +9,7 @@ namespace Backend.Controllers.Target
 {
     [Route("target")]
     [ApiController]
-    public class TargetController(ILogger<TargetController> logger ) : ControllerBase
+    public class TargetController(ILogger<TargetController> logger) : ControllerBase
     {
         [HttpPost("updateTarget")]
         public async Task<IActionResult> UpdateTarget(

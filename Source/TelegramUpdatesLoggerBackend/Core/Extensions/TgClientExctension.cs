@@ -67,12 +67,5 @@ namespace Core.Extensions
             else if (accessHash == null) return new InputPeerChat(peerId);
             else return new InputPeerChannel(peerId, accessHash ?? 0);
         }
-
-        public static LoggingTargetType GetInputPeerType(long peerId)
-        {
-            if (peerId > 0) return LoggingTargetType.User;
-            else if (peerId.ToString().StartsWith("-100")) return LoggingTargetType.Channel;
-            else return LoggingTargetType.Chat;
-        }
     }
 }
