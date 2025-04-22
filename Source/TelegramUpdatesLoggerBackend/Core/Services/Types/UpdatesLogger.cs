@@ -75,6 +75,7 @@ namespace Core.Services.Types
                         Text = msg.message,
                         TextEntities = JsonSerializer.Serialize(msg.entities),
                         MessageId = msg.id,
+                        FromId = msg.From == null ? -1 : msg.From.ID,
                         PrevEdit = null,
                         Time = DateTime.UtcNow,
                         MsgDate = msg.date
@@ -95,6 +96,7 @@ namespace Core.Services.Types
                         Text = msg.message,
                         TextEntities = JsonSerializer.Serialize(msg.entities),
                         MessageId = msg.id,
+                        FromId = msg.From == null ? -1 : msg.From.ID,
                         PrevEdit = await GetPrevEdit(msg.id),
                         Time = DateTime.UtcNow,
                         MsgDate = msg.edit_date

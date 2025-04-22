@@ -130,16 +130,6 @@ namespace Core.Services
             Task? logTask = null;
             switch (update)
             {
-                case UpdateNewChannelMessage uncm:
-                    {
-                        Console.WriteLine(uncm.GetType().Name);
-                    }
-                    break;
-                case UpdateDeleteChannelMessages udcm:
-                    {
-                        Console.WriteLine(udcm.GetType().Name);
-                    }
-                    break;
                 case UpdateNewMessage unm: logTask = GetLogger(loggers, unm.message.Peer.ID)?.HandleNewMessage(unm); break;
                 case UpdateEditMessage uem: logTask = GetLogger(loggers, uem.message.Peer.ID)?.HandleEditMessage(uem); break;
                 case UpdateDeleteMessages udm:
