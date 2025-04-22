@@ -2,7 +2,6 @@ import { http_post } from "../httpRequest";
 import sign from "../signature";
 
 const apiPath = "target/"
-
 var apiAuthData = undefined;
 
 function init(AuthData) {

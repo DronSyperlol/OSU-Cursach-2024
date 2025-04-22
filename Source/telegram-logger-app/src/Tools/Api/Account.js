@@ -2,7 +2,7 @@ import { http_post } from "../httpRequest";
 import sign from "../signature";
 
 const apiPath = "account/"
-const defaultLimit = 10;
+const defaultLimit = 50;
 
 var apiAuthData = undefined;
 

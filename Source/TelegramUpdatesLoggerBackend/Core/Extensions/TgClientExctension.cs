@@ -42,11 +42,12 @@ namespace Core.Extensions
             InputPeer? offsetPeer = null;
             DateTime offsetDate = default;
             List<DialogInfo> result = [];
-            int sourceOffsetId = offsetId;
-            int maxIterations = 5;
-            while (result.Count < limit && maxIterations-- > 0)
+            const int maxLimit = 100;
+            int prevGet = maxLimit;
+            while (result.Count < limit && prevGet >= maxLimit)
             {
-                var dialogs = await account.Client.Messages_GetDialogs(limit: limit, offset_id: offsetId);
+                var dialogs = await account.Client.Messages_GetDialogs(limit: maxLimit, offset_id: offsetId, offset_peer: offsetPeer, offset_date: offsetDate);
+                prevGet = dialogs.Dialogs.Length;
                 foreach (var dialog in dialogs.Dialogs)
                 {
                     string topMessage = "<empty>";
@@ -78,7 +79,7 @@ namespace Core.Extensions
                     if (tmp?.GetInputPeer() != null)
                     {
                         offsetPeer = tmp.GetInputPeer();
-                        //offsetDate = dialogs.Messages.First(d => d.ID == dialog.TopMessage).Date;
+                        offsetDate = dialogs.Messages.First(d => d.ID == dialog.TopMessage).Date;
                         offsetId = dialog.TopMessage;
                     }
                     if (tmp != null && !tmp.IsBot() && !tmp.IsChannel())
@@ -86,6 +87,7 @@ namespace Core.Extensions
                         tmp.IsTarget = targets.FirstOrDefault(g => g.PeerId == tmp.PeerId)?.LastTargetLog.First().Status == LoggingTargetStatus.Enabled;
                         result.Add(tmp);
                     }
+                    if (result.Count >= limit) break;
                 }
             }
             return result;

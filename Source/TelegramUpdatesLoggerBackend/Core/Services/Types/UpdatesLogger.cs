@@ -77,7 +77,7 @@ namespace Core.Services.Types
                         MessageId = msg.id,
                         PrevEdit = null,
                         Time = DateTime.UtcNow,
-                        MsgDate = msg.Date
+                        MsgDate = msg.date
                     });
                     break;
                 default: Console.WriteLine("Unknown type of the message"); break;
@@ -97,7 +97,7 @@ namespace Core.Services.Types
                         MessageId = msg.id,
                         PrevEdit = await GetPrevEdit(msg.id),
                         Time = DateTime.UtcNow,
-                        MsgDate = msg.Date
+                        MsgDate = msg.edit_date
                     });
                     break;
                 default: Console.WriteLine("Unknown type of the message"); break;
@@ -132,22 +132,8 @@ namespace Core.Services.Types
                         l.LoggingTarget.PeerId == PeerId)
                     .OrderByDescending(l => l.Time)
                     .FirstOrDefaultAsync(l => l.MessageId == messageId);
-                if (prevEdit != null)
-                    DetachLocal(context, prevEdit, prevEdit.Id);
             }
             return prevEdit;
-        }
-
-
-        public static void DetachLocal(DbContext context, UpdateLog t, long entryId)
-        {
-            var local = context.Set<UpdateLog>()
-                .Local.FirstOrDefault(entry => entry.Id.Equals(entryId));
-            if (local != null)
-            {
-                context.Entry(local).State = EntityState.Detached;
-            }
-            context.Entry(t).State = EntityState.Modified;
         }
     }
 }
