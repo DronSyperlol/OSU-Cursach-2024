@@ -22,12 +22,12 @@ namespace Backend.Controllers.Target.Logic
                     AccessHash = accessHash != null ? long.Parse(accessHash) : null,
                     FromAccount = account,
                     PeerId = peerId,
-                    Status = enable ? LoggingTargetStatus.Enable : LoggingTargetStatus.Disable,
+                    Status = enable ? LoggingTargetStatus.Enabled : LoggingTargetStatus.Disabled,
                 };
                 await context.Targets.AddAsync(target);
             }
             else 
-                target.Status = enable ? LoggingTargetStatus.Enable : LoggingTargetStatus.Disable;
+                target.Status = enable ? LoggingTargetStatus.Enabled : LoggingTargetStatus.Disabled;
             await context.SaveChangesAsync();   
         }
     }

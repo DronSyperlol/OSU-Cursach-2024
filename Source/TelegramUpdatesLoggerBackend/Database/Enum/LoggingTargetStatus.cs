@@ -4,8 +4,8 @@
     {
         Failure = -1,
         Unknown = 0,
-        Enable = 1, 
-        Disable = 2,
+        Enabled = 1, 
+        Disabled = 2,
 
         Deleted = 10,
         Banned = 11,

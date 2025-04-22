@@ -1,7 +1,9 @@
 ﻿using Config;
 using Core.Types;
 using Core.Workers;
+using Database;
 using Database.Enum;
+using Microsoft.EntityFrameworkCore;
 using TL;
 
 namespace Core.Extensions
@@ -24,19 +26,48 @@ namespace Core.Extensions
         }
         public static async Task<List<DialogInfo>> GetDialogs(this LoadedAccount account, int offsetId, int limit)
         {
+            using var context = new ApplicationContext();
+            var targets = context.Targets
+                .Include(t => t.FromAccount)
+                .Where(t =>
+                    t.FromAccount.PhoneNumber == account.PhoneNumber &&
+                    t.Status == LoggingTargetStatus.Enabled)
+                .ToList();
             var dialogs = await account.Client.Messages_GetDialogs(offset_id: offsetId, limit: limit);
             List<DialogInfo> result = [];
             foreach (var dialog in dialogs.Dialogs)
             {
-                Message message = (Message)dialogs.Messages.First(m => m.Peer.ID == dialog.Peer.ID);
+                string topMessage = "<empty>";
+                var msgOfDialog = dialogs.Messages.FirstOrDefault(m => m.Peer.ID == dialog.Peer.ID);
+                switch (msgOfDialog)
+                {
+                    case Message msg:
+                        topMessage = msg.message;
+                        break;
+                    case MessageService msgService:
+                        try
+                        {
+                            topMessage = msgService.action switch
+                            {
+                                MessageActionPinMessage => "Сообщение закреплено",
+                                _ => "Неизвестное действие"
+                            };
+                        }
+                        catch { topMessage = "msg service exception"; }
+                        break;
+                }
                 DialogInfo? tmp = dialogs.UserOrChat(dialog) switch
                 {
-                    User user => new(user, await AccountManager.DownloadAvatar(account.Client, user), message.message),
-                    Chat chat => new(chat, await AccountManager.DownloadAvatar(account.Client, chat), message.message),
-                    Channel channel => new(channel, await AccountManager.DownloadAvatar(account.Client, channel), message.message),
+                    User user => new(user, await AccountManager.DownloadAvatar(account.Client, user), topMessage),
+                    Chat chat => new(chat, await AccountManager.DownloadAvatar(account.Client, chat), topMessage),
+                    Channel channel => new(channel, await AccountManager.DownloadAvatar(account.Client, channel), topMessage),
                     _ => null,
                 };
-                if (tmp != null) result.Add(tmp);
+                if (tmp != null)
+                {
+                    tmp.IsTarget = targets.Any(t => t.PeerId == tmp.PeerId);
+                    result.Add(tmp);
+                }
             }
             return result;
         }

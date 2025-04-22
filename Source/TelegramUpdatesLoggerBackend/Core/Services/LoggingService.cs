@@ -42,7 +42,7 @@ namespace Core.Services
             var enabledTargets = await context.Targets
                 .AsNoTracking()
                 .Include(t => t.FromAccount)
-                .Where(t => t.Status == Database.Enum.LoggingTargetStatus.Enable)
+                .Where(t => t.Status == Database.Enum.LoggingTargetStatus.Enabled)
                 .GroupBy(t => t.FromAccount)
                 .Select(g => new
                 {
