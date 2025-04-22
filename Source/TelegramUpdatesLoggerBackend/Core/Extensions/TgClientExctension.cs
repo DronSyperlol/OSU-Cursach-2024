@@ -4,6 +4,8 @@ using Core.Workers;
 using Database;
 using Database.Enum;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using System;
 using TL;
 
 namespace Core.Extensions
@@ -35,48 +37,60 @@ namespace Core.Extensions
                 {
                     PeerId = g.Key,
                     LastTargetLog = g.Where(t => t.Id == g.Max(t => t.Id)),
-                    //LastTargetLog = g.OrderByDescending(t => t.Time).FirstOrDefault(),
                 })
-                //.Where(g => g.LastTargetLog != null && g.LastTargetLog.Status == LoggingTargetStatus.Enabled)
                 .ToListAsync(cancellationToken);
-            var dialogs = await account.Client.Messages_GetDialogs(offset_id: offsetId, limit: limit);
+            InputPeer? offsetPeer = null;
+            DateTime offsetDate = default;
             List<DialogInfo> result = [];
-            foreach (var dialog in dialogs.Dialogs)
+            int sourceOffsetId = offsetId;
+            int maxIterations = 5;
+            while (result.Count < limit && maxIterations-- > 0)
             {
-                string topMessage = "<empty>";
-                var msgOfDialog = dialogs.Messages.FirstOrDefault(m => m.Peer.ID == dialog.Peer.ID);
-                switch (msgOfDialog)
+                var dialogs = await account.Client.Messages_GetDialogs(limit: limit, offset_id: offsetId);
+                foreach (var dialog in dialogs.Dialogs)
                 {
-                    case Message msg:
-                        topMessage = msg.message;
-                        break;
-                    case MessageService msgService:
-                        try
-                        {
-                            topMessage = msgService.action switch
+                    string topMessage = "<empty>";
+                    var msgOfDialog = dialogs.Messages.FirstOrDefault(m => m.Peer.ID == dialog.Peer.ID);
+                    switch (msgOfDialog)
+                    {
+                        case Message msg:
+                            topMessage = msg.message;
+                            break;
+                        case MessageService msgService:
+                            try
                             {
-                                MessageActionPinMessage => "Сообщение закреплено",
-                                _ => "Неизвестное действие"
-                            };
-                        }
-                        catch { topMessage = "msg service exception"; }
-                        break;
-                }
-                DialogInfo? tmp = dialogs.UserOrChat(dialog) switch
-                {
-                    User user => new(user, await AccountManager.DownloadAvatar(account.Client, user), topMessage),
-                    Chat chat => new(chat, await AccountManager.DownloadAvatar(account.Client, chat), topMessage),
-                    Channel channel => new(channel, await AccountManager.DownloadAvatar(account.Client, channel), topMessage),
-                    _ => null,
-                };
-                if (tmp != null)
-                {
-                    tmp.IsTarget = targets.FirstOrDefault(g => g.PeerId == tmp.PeerId)?.LastTargetLog.First().Status == LoggingTargetStatus.Enabled;
-                    result.Add(tmp);
+                                topMessage = msgService.action switch
+                                {
+                                    MessageActionPinMessage => "Сообщение закреплено",
+                                    _ => "Неизвестное действие"
+                                };
+                            }
+                            catch { topMessage = "msg service exception"; }
+                            break;
+                    }
+                    DialogInfo? tmp = dialogs.UserOrChat(dialog) switch
+                    {
+                        User user => new(user, await AccountManager.DownloadAvatar(account.Client, user), topMessage, dialog.TopMessage),
+                        Chat chat => new(chat, await AccountManager.DownloadAvatar(account.Client, chat), topMessage, dialog.TopMessage),
+                        Channel channel => new(channel, await AccountManager.DownloadAvatar(account.Client, channel), topMessage, dialog.TopMessage),
+                        _ => null,
+                    };
+                    if (tmp?.GetInputPeer() != null)
+                    {
+                        offsetPeer = tmp.GetInputPeer();
+                        //offsetDate = dialogs.Messages.First(d => d.ID == dialog.TopMessage).Date;
+                        offsetId = dialog.TopMessage;
+                    }
+                    if (tmp != null && !tmp.IsBot() && !tmp.IsChannel())
+                    {
+                        tmp.IsTarget = targets.FirstOrDefault(g => g.PeerId == tmp.PeerId)?.LastTargetLog.First().Status == LoggingTargetStatus.Enabled;
+                        result.Add(tmp);
+                    }
                 }
             }
             return result;
         }
+
 
         public static async Task<List<object>> GetDialogHistory(this LoadedAccount account, InputPeer inputPeer, int offsetId, int limit)
         {
