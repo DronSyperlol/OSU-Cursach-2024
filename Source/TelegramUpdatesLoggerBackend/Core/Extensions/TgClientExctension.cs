@@ -24,15 +24,21 @@ namespace Core.Extensions
             }
             else return null;
         }
-        public static async Task<List<DialogInfo>> GetDialogs(this LoadedAccount account, int offsetId, int limit)
+        public static async Task<List<DialogInfo>> GetDialogs(this LoadedAccount account, int offsetId, int limit, CancellationToken cancellationToken)
         {
             using var context = new ApplicationContext();
-            var targets = context.Targets
+            var targets = await context.Targets
                 .Include(t => t.FromAccount)
-                .Where(t =>
-                    t.FromAccount.PhoneNumber == account.PhoneNumber &&
-                    t.Status == LoggingTargetStatus.Enabled)
-                .ToList();
+                .Where(t => t.FromAccount.PhoneNumber == account.PhoneNumber)
+                .GroupBy(t => t.PeerId)
+                .Select(g => new
+                {
+                    PeerId = g.Key,
+                    LastTargetLog = g.Where(t => t.Id == g.Max(t => t.Id)),
+                    //LastTargetLog = g.OrderByDescending(t => t.Time).FirstOrDefault(),
+                })
+                //.Where(g => g.LastTargetLog != null && g.LastTargetLog.Status == LoggingTargetStatus.Enabled)
+                .ToListAsync(cancellationToken);
             var dialogs = await account.Client.Messages_GetDialogs(offset_id: offsetId, limit: limit);
             List<DialogInfo> result = [];
             foreach (var dialog in dialogs.Dialogs)
@@ -65,7 +71,7 @@ namespace Core.Extensions
                 };
                 if (tmp != null)
                 {
-                    tmp.IsTarget = targets.Any(t => t.PeerId == tmp.PeerId);
+                    tmp.IsTarget = targets.FirstOrDefault(g => g.PeerId == tmp.PeerId)?.LastTargetLog.First().Status == LoggingTargetStatus.Enabled;
                     result.Add(tmp);
                 }
             }

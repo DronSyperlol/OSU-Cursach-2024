@@ -11,7 +11,11 @@ export default class DialogItem extends react.Component {
         return (
             <li key={this.props.item.peerId} className="dialogListItem">
                 <div className="dialogWatch" title="Отслеживать этот чат">
-                    <input type="checkbox" checked={this.props.item.isTarget ? "checked": null} onChange={(cb) => this.props.onChecked(cb.currentTarget.checked, this.props.item.peerId, this.props.item.accessHash)}/>
+                    <input type="checkbox" checked={this.props.item.isTarget ? "checked": null} onChange={(cb) => 
+                    {
+                        this.props.item.isTarget = cb.currentTarget.checked;
+                        this.props.onChecked(cb.currentTarget.checked, this.props.item.peerId, this.props.item.accessHash)
+                    }}/>
                 </div>
                 <div className="dialogItem" onClick={() => {this.props.onSelected(this.props.item)}}>
                     <img className="dialogImage" height={avatarSize} width={avatarSize} src={this.props.item.photoUrl} alt="avatar"/>

@@ -107,11 +107,12 @@ namespace Backend.Controllers.Acccount
         public async Task<IActionResult> GetDialogs(
             [FromBody] GetDialogsRequest args,
             [FromHeader] long userId,
-            [FromHeader] string sessionCode)
+            [FromHeader] string sessionCode,
+            CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(args.phoneNumber);
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
-            List<Core.Types.DialogInfo> result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogs(args.offsetId, args.limit);
+            List<Core.Types.DialogInfo> result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogs(args.offsetId, args.limit, cancellationToken);
             var response = new GetDialogsResponse() { dialogs = result };
             response.Sign(userId, sessionCode);
             return response.ToObjectResult();

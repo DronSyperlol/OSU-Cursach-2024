@@ -12,6 +12,7 @@ namespace Database.Entities
         public required Account FromAccount { get; set; }
         public required long PeerId { get; set; }
         public required long? AccessHash { get; set; }
+        public DateTime Time { get; set; } = DateTime.UtcNow;
         public LoggingTargetType Type { get; set; }
         public LoggingTargetStatus Status { get; set; }
         public List<UpdateLog> Logs { get; set; } = [];

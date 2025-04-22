@@ -26,6 +26,7 @@ namespace Core.Services.Types
         public long AccountId { get => _account.Id; }
         public long PeerId { get => _peer.ID; }
         public InputPeer InputPeer { get => _peer; }
+        public LoadedAccount LoadedAccount { get => _lacc; }
 
         public async Task Save()
         {

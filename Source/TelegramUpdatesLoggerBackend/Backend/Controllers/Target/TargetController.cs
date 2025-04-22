@@ -16,14 +16,15 @@ namespace Backend.Controllers.Target
             ApplicationContext context,
             [FromBody] UpdateTargetRequest args,
             [FromHeader] long userId,
-            [FromHeader] string sessionCode)
+            [FromHeader] string sessionCode,
+            CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(args.phoneNumber);
             ArgumentNullException.ThrowIfNull(args.enable);
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
             try
             {
-                await TargetManager.SetTarget(context, userId, args.phoneNumber, args.peerId, args.accessHash, args.enable ?? false);
+                await TargetManager.SetTarget(context, userId, args.phoneNumber, args.peerId, args.accessHash, args.enable ?? false, cancellationToken);
                 var response = new TargetStatusResponse()
                 {
                     peerId = args.peerId,

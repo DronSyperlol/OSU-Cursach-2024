@@ -5,6 +5,7 @@ using Core.Types;
 using Core.Workers;
 using Database;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.InteropServices;
 using TL;
 
 namespace Core.Services
@@ -12,7 +13,7 @@ namespace Core.Services
     public class LoggingService
     {
         static LoggingService? instance = null;
-        static object x = new object();
+        private static readonly object x = new();
         public static LoggingService Instance
         {
             get
@@ -35,35 +36,52 @@ namespace Core.Services
 
         readonly Dictionary<long, List<UpdatesLogger>> Loggers = [];
 
-        public async Task Update()
+        public async Task Update(CancellationToken cancellationToken)
         {
             if (InWork == false) return;
             using var context = new ApplicationContext();
-            var enabledTargets = await context.Targets
+            var enabledTargetsLogs = await context.Targets
                 .AsNoTracking()
                 .Include(t => t.FromAccount)
-                .Where(t => t.Status == Database.Enum.LoggingTargetStatus.Enabled)
-                .GroupBy(t => t.FromAccount)
+                .GroupBy(t => t.PeerId)
+                .Select(g => g.Where(t => t.Id == g.Max(t => t.Id)))
+                .ToListAsync(cancellationToken);
+            var enabledTargets = enabledTargetsLogs
+                .Select(etl => etl.First())
+                .Where(etl => etl.Status == Database.Enum.LoggingTargetStatus.Enabled)
+                .GroupBy(ge => ge.FromAccount.PhoneNumber)
                 .Select(g => new
                 {
-                    Account = g.Key,
+                    Account = g.FirstOrDefault()!.FromAccount,
                     Targets = g.Select(ge => new
                     {
                         Target = ge,
                         InputPeer = TgClientExctension.GetInputPeer(ge.PeerId, ge.AccessHash)
                     })
-                }).ToListAsync();
+                })
+                .ToList();
             foreach (var targets in enabledTargets)
             {
-                var lacc = await AccountManager.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
-                List<UpdatesLogger> loggers = [];
-                lacc.Client.WithUpdateManager((update) => UpdateHandler(update, lacc, targets.Account.Id));
+                Loggers.TryGetValue(targets.Account.Id, out List<UpdatesLogger>? loggers);
+                LoadedAccount? lacc = null;
+                loggers ??= [];
+                if (loggers.Count == 0)
+                {
+                    loggers = [];
+                    lacc = await AccountManager.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
+                    lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
+                    Loggers.TryAdd(targets.Account.Id, loggers);
+                }
+                else
+                {
+                    lacc = loggers.First().LoadedAccount;
+                    loggers.Clear();
+                }
                 foreach (var target in targets.Targets)
                 {
                     var tmp = new UpdatesLogger(lacc, targets.Account, target.Target, target.InputPeer);
                     loggers.Add(tmp);
                 }
-                Loggers.TryAdd(targets.Account.Id, loggers);
             }
         }
 
@@ -92,7 +110,7 @@ namespace Core.Services
         async Task StartAsync(CancellationToken cancellationToken)
         {
             InWork = true;
-            await Update();
+            await Update(cancellationToken);
         }
 
         Task StopAsync()
@@ -105,7 +123,7 @@ namespace Core.Services
             return Task.CompletedTask;
         }
 
-        async Task UpdateHandler(Update update, LoadedAccount loadedAccount, long fromAccountId)
+        async Task UpdateHandler(Update update, long fromAccountId)
         {
             Loggers.TryGetValue(fromAccountId, out List<UpdatesLogger>? loggers);
             if (loggers == null) return;

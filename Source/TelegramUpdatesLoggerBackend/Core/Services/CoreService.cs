@@ -7,7 +7,7 @@ namespace Core.Services
     public class CoreService
     {
         static CoreService? instance = null;
-        static object x = new object();
+        private readonly static object x = new();
         public static CoreService Instance
         {
             get
