@@ -1,9 +1,10 @@
-﻿using Config;
+﻿using Backend.Tools;
+using Config;
 using TL;
 
-namespace Core.Types
+namespace Backend.Controllers.Acccount.Logic.Types
 {
-    public class DialogInfo
+    public class DialogInfo : ParsebleToDictionaryBase
     {
         public const int MAX_MESSAGE_PREVIEW = 50;
 

@@ -17,6 +17,8 @@ namespace Backend.Tools
                         ret.Add(property.Name, TimeStampConvertor.DatetimeToLong(time));
                     else if (value is ParsebleToDictionaryBase parseble)
                         ret.Add(property.Name, parseble.ToDict());
+                    else if (value is IEnumerable<ParsebleToDictionaryBase> values)
+                        ret.Add(property.Name, values.Select(v => v.ToDict()).ToArray());
                     else
                         ret.Add(property.Name, value);
             }

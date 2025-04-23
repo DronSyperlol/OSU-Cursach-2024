@@ -1,11 +1,9 @@
 ﻿using Config;
-using Core.Extensions;
 using Core.Services.Types;
-using Core.Types;
 using Core.Workers;
+using Core.Workers.Types;
 using Database;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.InteropServices;
 using TL;
 
 namespace Core.Services
@@ -56,7 +54,7 @@ namespace Core.Services
                     Targets = g.Select(ge => new
                     {
                         Target = ge,
-                        InputPeer = TgClientExctension.GetInputPeer(ge.PeerId, ge.AccessHash)
+                        InputPeer = GetInputPeer(ge.PeerId, ge.AccessHash)
                     })
                 })
                 .ToList();
@@ -68,7 +66,7 @@ namespace Core.Services
                 if (loggers.Count == 0)
                 {
                     loggers = [];
-                    lacc = await AccountManager.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
+                    lacc = await LoadedAccountsWorker.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
                     lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
                     Loggers.TryAdd(targets.Account.Id, loggers);
                 }
@@ -150,5 +148,12 @@ namespace Core.Services
 
         static UpdatesLogger? GetLogger(List<UpdatesLogger> loggers, long peerId)
             => loggers.FirstOrDefault(l => l.PeerId == peerId);
+
+        public static InputPeer GetInputPeer(long peerId, long? accessHash)
+        {
+            if (peerId > 0) return new InputPeerUser(peerId, accessHash ?? 0);
+            else if (accessHash == null) return new InputPeerChat(peerId);
+            else return new InputPeerChannel(peerId, accessHash ?? 0);
+        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿#pragma warning disable IDE1006
 
+using Backend.Controllers.Acccount.Logic.Types;
 using Backend.Tools;
-using Core.Types;
 
 namespace Backend.Controllers.Acccount.Responses
 {

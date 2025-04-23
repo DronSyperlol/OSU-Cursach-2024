@@ -1,6 +1,6 @@
 ﻿using WTelegram;
 
-namespace Core.Types
+namespace Core.Workers.Types
 {
     public class LoadedAccount
     {

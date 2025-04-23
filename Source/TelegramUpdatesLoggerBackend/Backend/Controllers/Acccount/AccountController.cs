@@ -1,8 +1,8 @@
-﻿using Backend.Controllers.Acccount.Requests;
+﻿using Backend.Controllers.Acccount.Logic;
+using Backend.Controllers.Acccount.Logic.Types;
+using Backend.Controllers.Acccount.Requests;
 using Backend.Controllers.Acccount.Responses;
 using Backend.Tools;
-using Core.Extensions;
-using Core.Workers;
 using Database;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +21,7 @@ namespace Backend.Controllers.Acccount
         {
             ArgumentNullException.ThrowIfNull(args.phone);
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
-            var status = await AccountManager.OpenNewAccount(context, args.phone, userId);
+            var status = await AccountManager.NewAccount(context, args.phone, userId);
             var response = new NewAccountResponse()
             {
                 ownerId = userId,
@@ -43,8 +43,7 @@ namespace Backend.Controllers.Acccount
             ArgumentNullException.ThrowIfNull(args.phone);
             ArgumentNullException.ThrowIfNull(args.code);
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
-            var status = await AccountManager
-                .SetCodeToNewAccount(context, args.phone, args.code);
+            var status = await AccountManager.NewAccountSetCode(context, args.phone, args.code);
             var response = new NewAccountResponse()
             {
                 ownerId = userId,
@@ -67,7 +66,7 @@ namespace Backend.Controllers.Acccount
             try { args.Verify(userId, sessionCode); }
             catch { return Unauthorized(); }
             var status = await AccountManager
-                .SetCloudPasswordToNewAccount(context, args.phone, args.password);
+                .NewAccountSetCloudPassword(context, args.phone, args.password);
             var response = new NewAccountResponse()
             {
                 ownerId = userId,
@@ -88,16 +87,7 @@ namespace Backend.Controllers.Acccount
             [FromHeader] string sessionCode)
         {
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
-            List<Core.Types.AccountInfo> result = [];
-            var accounts = context.Accounts.Where(a => a.OwnerId == userId);
-            foreach (var acc in accounts)
-            {
-                var tmp = await (await AccountManager.Get(userId, acc.PhoneNumber)).GetMe();
-                if (tmp != null)
-                {
-                    result.Add(tmp);
-                }
-            }
+            var result = await AccountManager.GetAccounts(context, userId);
             var response = new GetMyAccountsResponse() { accounts = result };
             response.Sign(userId, sessionCode);
             return response.ToObjectResult();
@@ -105,6 +95,7 @@ namespace Backend.Controllers.Acccount
 
         [HttpPost("getDialogs")]
         public async Task<IActionResult> GetDialogs(
+            ApplicationContext context,
             [FromBody] GetDialogsRequest args,
             [FromHeader] long userId,
             [FromHeader] string sessionCode,
@@ -112,7 +103,8 @@ namespace Backend.Controllers.Acccount
         {
             ArgumentNullException.ThrowIfNull(args.phoneNumber);
             try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
-            List<Core.Types.DialogInfo> result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogs(args.offsetId, args.limit, cancellationToken);
+            List<DialogInfo> result = await AccountManager
+                .GetDialogs(context, userId, args.phoneNumber, args.offsetId, args.limit, cancellationToken);
             var response = new GetDialogsResponse() { dialogs = result };
             response.Sign(userId, sessionCode);
             return response.ToObjectResult();

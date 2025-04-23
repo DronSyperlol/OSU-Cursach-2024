@@ -1,34 +1,51 @@
-﻿using Config;
-using Core.Types;
-using Core.Workers;
+﻿using Backend.Controllers.Acccount.Logic.Types;
 using Database;
+using Core.Workers;
+using Config;
+using Core.Workers.Types;
 using Database.Enum;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using System;
 using TL;
+using Microsoft.EntityFrameworkCore;
 
-namespace Core.Extensions
+namespace Backend.Controllers.Acccount.Logic
 {
-    public static class TgClientExctension
+    public static class AccountManager
     {
-        public static async Task<AccountInfo?> GetMe(this LoadedAccount account)
+        public static async Task<string> NewAccount(ApplicationContext context, string phone, long ownerId)
+            => await LoadedAccountsWorker.OpenNewAccount(context, phone, ownerId);
+
+        public static async Task<string> NewAccountSetCode(ApplicationContext context, string phone, string code)
+            => await LoadedAccountsWorker.SetCodeToNewAccount(context, phone, code);
+
+        public static async Task<string> NewAccountSetCloudPassword(ApplicationContext context, string phone, string password)
+            => await LoadedAccountsWorker.SetCloudPasswordToNewAccount(context, phone, password);
+
+        public static async Task<List<AccountInfo>> GetAccounts(ApplicationContext context, long userId)
         {
-            if (account.Status == LoadedAccount.Statuses.Logged)
+            List<AccountInfo> result = [];
+            var accounts = context.Accounts.Where(a => a.OwnerId == userId);
+            foreach (var acc in accounts)
             {
-                return new()
+                var account = await LoadedAccountsWorker.Get(userId, acc.PhoneNumber);
+                if (account.Status == LoadedAccount.Statuses.Logged)
                 {
-                    PhoneNumber = account.PhoneNumber,
-                    PhotoUrl = ProgramConfig.Path.Static + await AccountManager.DownloadAvatar(account.Client, account.Client.User),
-                    Title = account.Client.User.first_name + " " + account.Client.User.last_name,
-                    Username = account.Client.User.username
-                };
+                    result.Add(new()
+                    {
+                        PhoneNumber = account.PhoneNumber,
+                        PhotoUrl = ProgramConfig.Path.Static + await LoadedAccountsWorker.DownloadAvatar(account.Client, account.Client.User),
+                        Title = account.Client.User.first_name + " " + account.Client.User.last_name,
+                        Username = account.Client.User.username
+                    });
+                }
             }
-            else return null;
+            return result;
         }
-        public static async Task<List<DialogInfo>> GetDialogs(this LoadedAccount account, int offsetId, int limit, CancellationToken cancellationToken)
+
+        public static async Task<List<DialogInfo>> GetDialogs(
+            ApplicationContext context, long userId, string phone,
+            int offsetId, int limit, CancellationToken cancellationToken)
         {
-            using var context = new ApplicationContext();
+            var account = await LoadedAccountsWorker.Get(userId, phone);
             var targets = await context.Targets
                 .Include(t => t.FromAccount)
                 .Where(t => t.FromAccount.PhoneNumber == account.PhoneNumber)
@@ -71,9 +88,9 @@ namespace Core.Extensions
                     }
                     DialogInfo? tmp = dialogs.UserOrChat(dialog) switch
                     {
-                        User user => new(user, await AccountManager.DownloadAvatar(account.Client, user), topMessage, dialog.TopMessage),
-                        Chat chat => new(chat, await AccountManager.DownloadAvatar(account.Client, chat), topMessage, dialog.TopMessage),
-                        Channel channel => new(channel, await AccountManager.DownloadAvatar(account.Client, channel), topMessage, dialog.TopMessage),
+                        User user => new(user, await LoadedAccountsWorker.DownloadAvatar(account.Client, user), topMessage, dialog.TopMessage),
+                        Chat chat => new(chat, await LoadedAccountsWorker.DownloadAvatar(account.Client, chat), topMessage, dialog.TopMessage),
+                        Channel channel => new(channel, await LoadedAccountsWorker.DownloadAvatar(account.Client, channel), topMessage, dialog.TopMessage),
                         _ => null,
                     };
                     if (tmp?.GetInputPeer() != null)
@@ -91,13 +108,6 @@ namespace Core.Extensions
                 }
             }
             return result;
-        }
-
-        public static InputPeer GetInputPeer(long peerId, long? accessHash)
-        {
-            if (peerId > 0) return new InputPeerUser(peerId, accessHash ?? 0);
-            else if (accessHash == null) return new InputPeerChat(peerId);
-            else return new InputPeerChannel(peerId, accessHash ?? 0);
         }
     }
 }

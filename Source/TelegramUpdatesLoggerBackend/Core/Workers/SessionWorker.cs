@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Core.Workers
 {
-    public class SessionManager : IWorker
+    public class SessionWorker : IWorker
     {
         static List<Types.Session> Sessions = [];
 

@@ -1,15 +1,15 @@
 ﻿using Config;
 using Core.Interfaces;
-using Core.Types;
 using Database;
 using Microsoft.EntityFrameworkCore;
 using WTelegram;
 using TL;
 using User = Database.Entities.User;
+using Core.Workers.Types;
 
 namespace Core.Workers
 {
-    public class AccountManager : IWorker
+    public class LoadedAccountsWorker : IWorker
     {
         static List<LoadedAccount> LoadedAccounts = [];
 

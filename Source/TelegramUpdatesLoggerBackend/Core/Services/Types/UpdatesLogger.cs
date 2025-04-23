@@ -1,4 +1,4 @@
-﻿using Core.Types;
+﻿using Core.Workers.Types;
 using Database;
 using Database.Entities;
 using Microsoft.EntityFrameworkCore;

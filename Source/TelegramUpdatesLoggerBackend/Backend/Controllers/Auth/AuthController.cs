@@ -30,7 +30,7 @@ namespace Backend.Controllers.Auth
             try
             {
                 await UserManager.RegisterOrUpdate(context, initData.User);
-                string newSession = await SessionManager.OpenNew(context, initData.Hash, initData.User.Id);
+                string newSession = await SessionWorker.OpenNew(context, initData.Hash, initData.User.Id);
                 await context.SaveChangesAsync();
                 var response = new LogInResponse()
                 {
@@ -77,7 +77,7 @@ namespace Backend.Controllers.Auth
                 }
                 if (userId != -1)
                 {
-                    context.Request.Headers.TryAdd("sessionCode", SessionManager.GetCodeByUser(userId));
+                    context.Request.Headers.TryAdd("sessionCode", SessionWorker.GetCodeByUser(userId));
                 }
                 else if (userId == -1 && (context.Request.Path.Value == null || !context.Request.Path.Value.EndsWith("auth/logIn")))
                 {

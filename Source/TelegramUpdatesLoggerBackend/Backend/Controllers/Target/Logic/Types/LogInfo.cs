@@ -1,9 +1,10 @@
-﻿using Database.Entities;
+﻿using Backend.Tools;
+using Database.Entities;
 using Database.Enum;
 
 namespace Backend.Controllers.Target.Logic.Types
 {
-    public class LogInfo
+    public class LogInfo : ParsebleToDictionaryBase
     {
         public long Id { get; set; }
         public required string Type { get; set; }

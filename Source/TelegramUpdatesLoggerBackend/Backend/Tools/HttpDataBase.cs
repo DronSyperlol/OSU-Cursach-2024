@@ -44,6 +44,7 @@ namespace Backend.Tools
             if (!signature.Equals(tmp, StringComparison.OrdinalIgnoreCase)) throw new UnauthorizedAccessException("Signature do not match!");
         }
 
+
         //  В GetSortedParams надо ключи заполнять с именем корневого объекта.
         //  Пример: { root: { child: "value" } } -> { root.child : "value" }
         protected virtual SortedDictionary<string, object> GetSortedParams()
