@@ -26,6 +26,7 @@ namespace Backend.Controllers.Target.Logic
                 AccessHash = accessHash != null ? long.Parse(accessHash) : null,
                 FromAccount = account,
                 PeerId = peerId,
+                Type = LoggingTargetType.Messages,
                 Status = enable ? LoggingTargetStatus.Enabled : LoggingTargetStatus.Disabled,
             };
             await context.Targets.AddAsync(newTargetLog, cancellationToken: cancellationToken);
@@ -39,6 +40,7 @@ namespace Backend.Controllers.Target.Logic
             int offsetId, int limit,
             CancellationToken cancellationToken)
         {
+            if (offsetId == 0) offsetId = int.MaxValue;
             List<LogInfo> result = [];
             var messageUpdates = await context.UpdatesMessage
                 .Include(l => l.LoggingTarget)
@@ -50,14 +52,17 @@ namespace Backend.Controllers.Target.Logic
                     l.Id < offsetId)
                 .Take(limit)
                 .ToListAsync(cancellationToken);
+            if (messageUpdates.Count == 0) return [];
             messageUpdates.ForEach(mu => result.Add(LogInfo.FromMessageLog(mu)));
+            var minTime = messageUpdates.Min(mu => mu.Time);
+            var maxTime = messageUpdates.Max(mu => mu.Time);
             var targetsLogs = await context.Targets
                 .Include(l => l.FromAccount)
                 .Where(l =>
                     l.FromAccount.PhoneNumber == phoneNumber &&
                     l.PeerId == peerId && 
-                    l.Time >= messageUpdates.Min(mu => mu.Time) &&
-                    l.Time <= messageUpdates.Max(mu => mu.Time))
+                    l.Time >= minTime &&
+                    l.Time <= maxTime)
                 .ToListAsync(cancellationToken);
             targetsLogs.ForEach(tl => result.Add(LogInfo.FromTarget(tl)));
             if (result.Count == 0) return [];
@@ -67,11 +72,11 @@ namespace Backend.Controllers.Target.Logic
                 .Where(l =>
                     l.LoggingTarget.FromAccount.PhoneNumber == phoneNumber &&
                     l.LoggingTarget.PeerId == peerId &&
-                    l.Id > messageUpdates.First().Id &&
+                    l.Id >= messageUpdates.First().Id &&
                     l.Id <= messageUpdates.Last().Id)
                 .ToListAsync(cancellationToken);
             deletedMesssagesUpdates.ForEach(dmu => result.Add(LogInfo.FromDeletedMessageLog(dmu)));
-            return [.. result.OrderBy(l => l.Id).Take(limit)];
+            return [.. result.OrderByDescending(l => l.Id).Take(limit)];
         }
     }
 }

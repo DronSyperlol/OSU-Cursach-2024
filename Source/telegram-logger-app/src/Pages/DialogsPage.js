@@ -17,7 +17,7 @@ export class DialogsPage extends React.Component {
     }
 
     dialogSelected = (sender) => {
-        this.props.app.Api.Account.getDialogHistory(this.props.phoneNumber, sender.dialogType, sender.peerId, sender.accessHash)
+        this.props.app.Api.Target.getSavedLogs(this.props.phoneNumber, sender.peerId)
         .then((response) => {
             console.log(response);
         })
