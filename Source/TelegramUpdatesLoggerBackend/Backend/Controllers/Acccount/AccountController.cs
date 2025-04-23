@@ -117,20 +117,5 @@ namespace Backend.Controllers.Acccount
             response.Sign(userId, sessionCode);
             return response.ToObjectResult();
         }
-
-        [HttpPost("getDialogHistory")]
-        public async Task<IActionResult> GetDialogHistory(
-            [FromBody] GetDialogHistoryRequest args,
-            [FromHeader] long userId,
-            [FromHeader] string sessionCode
-            )
-        {
-            ArgumentNullException.ThrowIfNull(args.phoneNumber);
-            ArgumentNullException.ThrowIfNull(args.dialogType);
-            try { args.Verify(userId, sessionCode); } catch { return Unauthorized(); }
-            var result = await (await AccountManager.Get(userId, args.phoneNumber)).GetDialogHistory(args.InputPeer, args.offsetId, args.limit);
-
-            throw new NotImplementedException();
-        }
     }
 }
