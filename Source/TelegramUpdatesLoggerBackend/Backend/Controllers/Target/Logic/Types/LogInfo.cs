@@ -14,6 +14,7 @@ namespace Backend.Controllers.Target.Logic.Types
         public int? MessageId { get; set; }
         public long FromId { get; set; }
         public DateTime LogTime { get; set; }
+        public List<LogInfo>? PrevChanges { get; set; } = [];
         public long? PrevId { get; set; }
 
 

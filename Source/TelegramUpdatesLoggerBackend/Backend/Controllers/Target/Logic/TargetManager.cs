@@ -2,7 +2,10 @@
 using Database;
 using Database.Entities;
 using Database.Enum;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using TL;
 
 namespace Backend.Controllers.Target.Logic
 {
@@ -42,41 +45,38 @@ namespace Backend.Controllers.Target.Logic
         {
             if (offsetId == 0) offsetId = int.MaxValue;
             List<LogInfo> result = [];
-            var messageUpdates = await context.UpdatesMessage
-                .Include(l => l.LoggingTarget)
-                .Include(l => l.LoggingTarget.FromAccount)
-                .OrderByDescending(l => l.Id)
-                .Where(l =>
-                    l.LoggingTarget.FromAccount.PhoneNumber == phoneNumber &&
-                    l.LoggingTarget.PeerId == peerId &&
-                    l.Id < offsetId)
-                .Take(limit)
-                .ToListAsync(cancellationToken);
-            if (messageUpdates.Count == 0) return [];
-            messageUpdates.ForEach(mu => result.Add(LogInfo.FromMessageLog(mu)));
-            var minTime = messageUpdates.Min(mu => mu.Time);
-            var maxTime = messageUpdates.Max(mu => mu.Time);
-            var targetsLogs = await context.Targets
-                .Include(l => l.FromAccount)
-                .Where(l =>
-                    l.FromAccount.PhoneNumber == phoneNumber &&
-                    l.PeerId == peerId && 
-                    l.Time >= minTime &&
-                    l.Time <= maxTime)
-                .ToListAsync(cancellationToken);
-            targetsLogs.ForEach(tl => result.Add(LogInfo.FromTarget(tl)));
-            if (result.Count == 0) return [];
-            var deletedMesssagesUpdates = await context.UpdatesDeleteMessage
+            var messageUpdatesQuery = context.UpdatesMessage
                 .Include(l => l.LoggingTarget)
                 .Include(l => l.LoggingTarget.FromAccount)
                 .Where(l =>
                     l.LoggingTarget.FromAccount.PhoneNumber == phoneNumber &&
                     l.LoggingTarget.PeerId == peerId &&
-                    l.Id >= messageUpdates.First().Id &&
-                    l.Id <= messageUpdates.Last().Id)
+                    l.MessageId < offsetId)
+                .GroupBy(l => l.MessageId)
+                .Select(g => new
+                {
+                    g.Key,
+                    List = g.OrderByDescending(l => l.Id).ToList(),
+                })
+                .OrderByDescending(l => l.Key)
+                .Take(limit);
+            var deletedMessages = await context.UpdatesDeleteMessage
+                .Where(dm => messageUpdatesQuery.Any(g => g.Key == dm.MessageId))
                 .ToListAsync(cancellationToken);
-            deletedMesssagesUpdates.ForEach(dmu => result.Add(LogInfo.FromDeletedMessageLog(dmu)));
-            return [.. result.OrderByDescending(l => l.Id).Take(limit)];
+            var messageUpdates = await messageUpdatesQuery.ToListAsync(cancellationToken);
+            messageUpdates.ForEach(g =>
+            {
+                var tmp = g.List.Select(LogInfo.FromMessageLog);
+                var deleted = deletedMessages.FirstOrDefault(l => l.MessageId == g.Key);
+                LogInfo main;
+                if (deleted != null) 
+                    main = LogInfo.FromDeletedMessageLog(deleted);
+                else 
+                    main = tmp.OrderByDescending(l => l.LogTime).First();
+                main.PrevChanges = [.. tmp.Where(l => l.Id != main.Id)];
+                result.Add(main);
+            });
+            return result;
         }
     }
 }
