@@ -6,22 +6,30 @@ using WTelegram;
 using TL;
 using User = Database.Entities.User;
 using Core.Workers.Types;
+using System.Net.Sockets;
 
 namespace Core.Workers
 {
     public class LoadedAccountsWorker : IWorker
     {
         static List<LoadedAccount> LoadedAccounts = [];
+        static bool NoInternetConnection = false;
 
         async Task IWorker.Handle(ApplicationContext context)
         {
+            if (NoInternetConnection && !await CheckInternetConnection()) return; // если интернет пропал, останавливаем работу
             var triggerDate = DateTime.UtcNow.AddMinutes(-5);
             List<LoadedAccount> actual = [];
             foreach (var loadedAccount in LoadedAccounts)
-                if (loadedAccount.InUse == false && loadedAccount.LastTrigger < triggerDate)
+                if (loadedAccount.InUse == false &&
+                    loadedAccount.LastTrigger < triggerDate)
                     await loadedAccount.Client.DisposeAsync();
                 else
+                {
+                    if (loadedAccount.Client.Disconnected || loadedAccount.Client.User == null)
+                        await Reconnect(loadedAccount);
                     actual.Add(loadedAccount);
+                }
             LoadedAccounts = actual;
         }
 
@@ -84,6 +92,24 @@ namespace Core.Workers
             return lAcc;
         }
 
+        static async Task Reconnect(LoadedAccount lacc)
+        {
+            if (!await CheckInternetConnection()) return;
+            try
+            {
+                await lacc.Client.DisposeAsync();
+                lacc.Client = GetRegisteredClient(lacc.OwnerId, lacc.PhoneNumber);
+                await lacc.Reconnect();
+            }
+            catch (SocketException)
+            {
+                await CheckInternetConnection();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.ToString());
+            }
+        }
 
         /// <summary>
         /// 
@@ -342,5 +368,28 @@ namespace Core.Workers
             await context.SaveChangesAsync();
         }
 
+        readonly static HttpClient _checkClient = new();
+        static async Task<bool> CheckInternetConnection()
+        {
+            try
+            {
+                await _checkClient.GetAsync("https://google.com");
+                if (NoInternetConnection)
+                {
+                    NoInternetConnection = false;
+                    Console.WriteLine("Internet available");
+                }
+                return true;
+            }
+            catch 
+            {
+                if (NoInternetConnection == false)
+                {
+                    Console.WriteLine("Internet not available");
+                    NoInternetConnection = true;
+                }
+                return false;
+            }
+        }
     }
 }

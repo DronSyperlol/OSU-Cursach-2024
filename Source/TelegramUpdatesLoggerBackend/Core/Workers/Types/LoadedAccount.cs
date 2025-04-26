@@ -1,4 +1,7 @@
-﻿using WTelegram;
+﻿using System.Net.Sockets;
+using System.Threading.Tasks;
+using TL.Methods;
+using WTelegram;
 
 namespace Core.Workers.Types
 {
@@ -12,16 +15,26 @@ namespace Core.Workers.Types
         public required long OwnerId { get; set; }
         public bool InUse { get; set; } = false;
         public long IdInDb { get; set; } = 0;
-        public Exception? _lastException = null;
-        public Exception? GetLastError() => _lastException;
-        public void SetLastError(Exception ex) { _lastException = ex; }
-        public void ClearError() { _lastException = null; }
+
+        public event Action? OnRestarted;
+
+        public DateTime _lastRestart = DateTime.MinValue;
+
+        public async Task Reconnect()
+        {
+            if (_lastRestart.AddSeconds(10) > DateTime.UtcNow)
+                return;
+            await Client.LoginUserIfNeeded();
+            if (Client.User != null)
+                OnRestarted?.Invoke();
+        }
+
         public void Trigger()
         {
             LastTrigger = DateTime.UtcNow;
         }
 
-        public struct Statuses
+        public readonly struct Statuses
         {
             public static readonly string Unknown = "Unknown";
             public static readonly string Logged = "Logged in";

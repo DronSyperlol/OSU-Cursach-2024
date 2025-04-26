@@ -68,7 +68,13 @@ namespace Core.Services
                     loggers = [];
                     lacc = await LoadedAccountsWorker.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
                     lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
-                    //lacc.OnConnectionRestored += () => lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
+                    lacc.OnRestarted += () =>
+                    {
+                        Console.WriteLine("Account restarted. Set update handler again...");
+                        lacc.Client.WithUpdateManager(
+                            (update) => UpdateHandler(update, targets.Account.Id));
+                        Console.WriteLine("Account restarted. Set update handler again...    done");
+                    };
                     Loggers.TryAdd(targets.Account.Id, loggers);
                 }
                 else

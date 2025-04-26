@@ -45,8 +45,15 @@ namespace Core.Services
                     var context = new ApplicationContext();
                     foreach (IWorker worker in workers)
                     {
-                        lastTask = worker.Handle(context);
-                        await lastTask;
+                        try
+                        {
+                            lastTask = worker.Handle(context);
+                            await lastTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.Error.WriteLine($"Critical error in CoreService: {ex}");
+                        }
                     }
                     lastTask = null;
                 }
