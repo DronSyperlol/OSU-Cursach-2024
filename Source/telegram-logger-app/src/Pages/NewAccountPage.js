@@ -11,8 +11,13 @@ export class NewAccountPage extends React.Component {
       phone: "",
       anonymValue: "",
     };
+    this.statuses = {
+      logged: "Logged in",
+      code: "verification_code",
+      password: "password",
+    }
   }
-  
+ 
   render = () => {
     return (
       <div>
@@ -28,8 +33,11 @@ export class NewAccountPage extends React.Component {
       this.props.app.Api.Account.newAccount(this.state.phone)
       .then((response) => {
         console.log(response);
-        if (response.status === "verification_code") {
+        if (response.status === this.statuses.code) {
           this.setState({currentForm: this.inputCode()});
+        }
+        else if (response.status === this.statuses.logged) {
+          this.props.onLogged(response.phone);
         }
       })
       .catch(err => {
@@ -53,8 +61,11 @@ export class NewAccountPage extends React.Component {
       this.props.app.Api.Account.setCode(this.state.phone, this.state.anonymValue)
       .then((response) => {
         console.log(response);
-        if (response.status === "password") {
+        if (response.status === this.statuses.password) {
           this.setState({currentForm: this.inputPassword()});
+        }
+        else if (response.status === this.statuses.logged) {
+          this.props.onLogged(response.phone);
         }
       }).catch(err => {
         console.log(err);
@@ -76,6 +87,9 @@ export class NewAccountPage extends React.Component {
       this.props.app.Api.Account.setPassword(this.state.phone, this.state.anonymValue)
       .then((response) => {
         console.log(response);
+        if (response.status === this.statuses.logged) {
+          this.props.onLogged(response.phone);
+        }
       }).catch(err => {
         console.log(err);
       });

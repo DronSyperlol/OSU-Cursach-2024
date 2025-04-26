@@ -141,7 +141,6 @@ namespace Core.Workers
                 {
                     Owner = user,
                     PhoneNumber = phoneNumber,
-                    AccountLogs = [],
                 };
                 await context.Accounts.AddAsync(dbAccount);
             }
@@ -155,7 +154,17 @@ namespace Core.Workers
             {
                 await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, ex.Message[..512], user);
             }
-            if (lAcc.Status != LoadedAccount.Statuses.Code)
+            if (lAcc.Client.User != null)
+            {
+                await AccountDbLog(
+                    context,
+                    dbAccount,
+                    Database.Enum.AccountStatus.Active,
+                    Database.Enum.AccountLogType.Login,
+                    "Login after set opening session");
+                lAcc.Status = LoadedAccount.Statuses.Logged;
+            }
+            else if (lAcc.Status != LoadedAccount.Statuses.Code && lAcc.Client.User == null)
             {
                 string errorMessage = $"CurrentStatus: {lAcc.Status} but expected \"{LoadedAccount.Statuses.Code}\"";
                 await AccountDbLog(context, dbAccount, Database.Enum.AccountStatus.Broken, Database.Enum.AccountLogType.Broke, errorMessage, user);
@@ -270,7 +279,7 @@ namespace Core.Workers
                     dbAccount,
                     Database.Enum.AccountStatus.Active,
                     Database.Enum.AccountLogType.Login,
-                    "Login after set code");
+                    "Login after set password");
                 lAcc.Status = LoadedAccount.Statuses.Logged;
             }
             lAcc.Trigger();

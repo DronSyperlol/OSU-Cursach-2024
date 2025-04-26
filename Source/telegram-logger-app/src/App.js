@@ -5,6 +5,7 @@ import { StartPage } from './Pages/StartPage';
 import { ErrorPage } from './Pages/ErrorPage';
 import { NewAccountPage } from './Pages/NewAccountPage'
 import { AccountsPage } from './Pages/AccountsPage';
+import { DialogsPage } from './Pages/DialogsPage';
 
 export default class App extends React.Component {
   static initCalled = false;
@@ -53,7 +54,15 @@ export default class App extends React.Component {
         App.Api.init(App.apiAuthData);
         App.doPing();
         if (data.accountCount === 0) {
-          this.drawPage(<NewAccountPage app={App}/>);
+          this.drawPage(<NewAccountPage app={App} onLogged={(phoneNumber) => {
+            App.Api.Account.getDialogs(phoneNumber)
+            .then((response) => {
+                console.log(response);
+                App.drawPage(<DialogsPage app={App} source={response.dialogs} phoneNumber={phoneNumber}/>);
+            }).catch((ex) => {
+                console.log(ex.message);
+            });
+          }}/>);
         }
         else {
           App.Api.Account.getMyAccounts(App.apiAuthData)
