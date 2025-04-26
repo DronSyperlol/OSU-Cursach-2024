@@ -6,7 +6,7 @@ namespace Backend.Controllers.Target.Logic.Types
 {
     public class LogInfo : ParsebleToDictionaryBase
     {
-        public long Id { get; set; }
+        public long DbId { get; set; }
         public required string Type { get; set; }
         public required string Message { get; set; }
         public required string MessageEntities { get; set; }
@@ -29,7 +29,7 @@ namespace Backend.Controllers.Target.Logic.Types
         {
             return new LogInfo
             {
-                Id = tl.Id,
+                DbId = tl.Id,
                 FromId = -1,
                 LogTime = tl.Time,
                 Message = tl.Type switch
@@ -57,7 +57,7 @@ namespace Backend.Controllers.Target.Logic.Types
         {
             return new LogInfo
             {
-                Id = uml.Id,
+                DbId = uml.Id,
                 FromId = uml.FromId,
                 LogTime = uml.Time,
                 Message = uml.Text,
@@ -73,7 +73,7 @@ namespace Backend.Controllers.Target.Logic.Types
         {
             return new LogInfo
             {
-                Id = udml.Id,
+                DbId = udml.Id,
                 FromId = -1,
                 LogTime = udml.Time,
                 Message = "",

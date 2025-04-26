@@ -12,6 +12,10 @@ namespace Core.Workers.Types
         public required long OwnerId { get; set; }
         public bool InUse { get; set; } = false;
         public long IdInDb { get; set; } = 0;
+        public Exception? _lastException = null;
+        public Exception? GetLastError() => _lastException;
+        public void SetLastError(Exception ex) { _lastException = ex; }
+        public void ClearError() { _lastException = null; }
         public void Trigger()
         {
             LastTrigger = DateTime.UtcNow;

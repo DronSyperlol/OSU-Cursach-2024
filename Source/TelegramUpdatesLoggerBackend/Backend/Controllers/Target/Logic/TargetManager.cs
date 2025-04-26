@@ -2,10 +2,7 @@
 using Database;
 using Database.Entities;
 using Database.Enum;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using TL;
 
 namespace Backend.Controllers.Target.Logic
 {
@@ -31,6 +28,7 @@ namespace Backend.Controllers.Target.Logic
                 PeerId = peerId,
                 Type = LoggingTargetType.Messages,
                 Status = enable ? LoggingTargetStatus.Enabled : LoggingTargetStatus.Disabled,
+                PrevTarget = target,
             };
             await context.Targets.AddAsync(newTargetLog, cancellationToken: cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
@@ -47,6 +45,7 @@ namespace Backend.Controllers.Target.Logic
             List<LogInfo> result = [];
             var messageUpdatesQuery = context.UpdatesMessage
                 .Include(l => l.LoggingTarget)
+                .Include(l => l.LoggingTarget.PrevTarget)
                 .Include(l => l.LoggingTarget.FromAccount)
                 .Where(l =>
                     l.LoggingTarget.FromAccount.PhoneNumber == phoneNumber &&
@@ -69,14 +68,23 @@ namespace Backend.Controllers.Target.Logic
                 var tmp = g.List.Select(LogInfo.FromMessageLog);
                 var deleted = deletedMessages.FirstOrDefault(l => l.MessageId == g.Key);
                 LogInfo main;
-                if (deleted != null) 
+                if (deleted != null)
                     main = LogInfo.FromDeletedMessageLog(deleted);
-                else 
+                else
                     main = tmp.OrderByDescending(l => l.LogTime).First();
-                main.PrevChanges = [.. tmp.Where(l => l.Id != main.Id)];
+                main.PrevChanges = [.. tmp.Where(l => l.DbId != main.DbId)];
                 result.Add(main);
             });
-            return result;
+            List<LogInfo> targets = [];
+            messageUpdates.ForEach(mu =>
+            {
+                targets.AddRange(mu.List.Select(l => LogInfo.FromTarget(l.LoggingTarget)));
+                targets.AddRange(mu.List
+                    .Where(l => l.LoggingTarget.PrevTarget != null)
+                    .Select(l => LogInfo.FromTarget(l.LoggingTarget.PrevTarget!)));
+            });
+            result.AddRange(targets.DistinctBy(li => li.DbId));
+            return [.. result.OrderByDescending(l => l.LogTime).Take(limit)];
         }
     }
 }

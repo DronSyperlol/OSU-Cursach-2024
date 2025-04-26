@@ -18,5 +18,8 @@ namespace Database.Entities
         public List<UpdateLog> Logs { get; set; } = [];
         [MaxLength(100)]
         public string? Error { get; set; } = null; // not null when status is Failure (-1)
+
+        public long? PrevTargetId { get; set; } = null;
+        public LoggingTarget? PrevTarget { get; set; } = null;
     }
 }
