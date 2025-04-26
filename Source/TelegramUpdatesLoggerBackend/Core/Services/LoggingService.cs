@@ -68,6 +68,7 @@ namespace Core.Services
                     loggers = [];
                     lacc = await LoadedAccountsWorker.Get(targets.Account.OwnerId, targets.Account.PhoneNumber);
                     lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
+                    //lacc.OnConnectionRestored += () => lacc.Client.WithUpdateManager((update) => UpdateHandler(update, targets.Account.Id));
                     Loggers.TryAdd(targets.Account.Id, loggers);
                 }
                 else
@@ -86,6 +87,7 @@ namespace Core.Services
         public async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var timer = new PeriodicTimer(TimeSpan.FromSeconds(ProgramConfig.LoggingSaveSec));
+            Task[]? tasks = null;
             try
             {
                 await StartAsync(stoppingToken);
@@ -93,14 +95,14 @@ namespace Core.Services
                 {
                     foreach (var item in Loggers)
                     {
-                        Task[] tasks = [.. item.Value.Select(l => l.Save())];
-                        foreach (var task in tasks)
-                            await task;
+                        tasks = [.. item.Value.Select(l => l.Save())];
+                        await WaitAllAsync(tasks);
                     }
                 }
             }
             catch (OperationCanceledException)
             {
+                await WaitAllAsync(tasks);
                 await StopAsync();
             }
         }
@@ -154,6 +156,13 @@ namespace Core.Services
             if (peerId > 0) return new InputPeerUser(peerId, accessHash ?? 0);
             else if (accessHash == null) return new InputPeerChat(peerId);
             else return new InputPeerChannel(peerId, accessHash ?? 0);
+        }
+
+        static async Task WaitAllAsync(Task[]? tasks)
+        {
+            if (tasks == null) return;
+            foreach (var task in tasks)
+                await task;
         }
     }
 }

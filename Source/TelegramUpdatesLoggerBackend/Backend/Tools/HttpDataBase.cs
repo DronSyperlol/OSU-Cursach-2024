@@ -15,7 +15,7 @@ namespace Backend.Tools
 
         public ObjectResult ToObjectResult()
         {
-            return new ObjectResult(this);
+            return new ObjectResult(ToDict());
         }
 
         public void Sign(long userId, string sessionCode)

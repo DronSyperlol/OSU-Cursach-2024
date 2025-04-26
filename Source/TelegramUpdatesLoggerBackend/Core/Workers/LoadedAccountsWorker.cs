@@ -161,7 +161,7 @@ namespace Core.Workers
                     dbAccount,
                     Database.Enum.AccountStatus.Active,
                     Database.Enum.AccountLogType.Login,
-                    "Login after set opening session");
+                    "Login after opening session");
                 lAcc.Status = LoadedAccount.Statuses.Logged;
             }
             else if (lAcc.Status != LoadedAccount.Statuses.Code && lAcc.Client.User == null)
