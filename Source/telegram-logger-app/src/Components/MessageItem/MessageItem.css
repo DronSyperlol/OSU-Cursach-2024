@@ -1,0 +1,71 @@
+.messages-list-title-box {
+  top: 0;
+  z-index: 1;
+  position: sticky;
+  background-color: cyan;
+  margin-top: 0px;
+  padding-top: 10px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.messages-list-title {
+  margin: 0;
+  text-align: center;
+}
+.messages-list {
+  list-style: none;
+  padding: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.messageListItem {
+  max-width: 75%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  word-wrap: break-word;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+.special {
+  padding: 2px 12px;
+  align-self: center;
+  background-color: #e5efff;
+  color: gray;
+  margin: 3px;
+  text-align: center;
+}
+.senderIsMe {
+  align-self: flex-end;
+  background-color: #0088cc;
+  color: white;
+  border-top-right-radius: 0;
+  margin-left: auto;
+}
+.senderIsOther {
+  align-self: flex-start;
+  background-color: #e5efff;
+  border-top-left-radius: 0;
+  margin-right: auto;
+}
+.messageDeleted {
+  background-color: brown;
+}
+.messageHeader {
+  text-align: left;
+}
+.messageData {
+  margin-bottom: 4px;
+  line-height: 1.4;
+  text-align: left;
+}
+.messageTime{
+  text-align: right;
+  font-size: small;
+}

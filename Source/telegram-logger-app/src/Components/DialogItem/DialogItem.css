@@ -1,18 +1,28 @@
-.dialog-list-grid {
-    display: grid;
-    place-items: center;
-    height: 100vh; /* Занять всю высоту экрана */
+.dialog-list-title-box {
+    top: 0;
+    z-index: 2;
+    position: sticky;
+    background-color: cyan;
+    margin-top: 0px;
+    padding-top: 10px;
+    text-align: center;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-
+.dialog-list-title {
+    margin: 0;
+    text-align: center;
+}
 .dialog-list {
     list-style-type: none; 
     padding: 0;
+    margin-top: 0px;
 }
-
 span {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
 .dialogListItem {
     display: flex;
     border: 1px solid black;
@@ -23,12 +33,10 @@ span {
     padding: 10px;
     align-items: center;
 }
-
 .dialogWatch {
     margin-right: 15px;
     left: 15px;
 }
-
 .dialogItem {
     display: flex;
     background-color: aquamarine;
@@ -36,19 +44,16 @@ span {
     position: relative;
     align-items: center;
 }
-
 .dialogInfo {
     padding: 15px;
     position: relative;
     text-align: left;
     font-size: 16px;
 }
-
 .dialogImage {
     border-radius: 100px;
     border: 3px solid black;
 }
-
 .dialogTitle {
     font-weight: bold;
 }

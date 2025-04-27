@@ -1,7 +1,7 @@
 import './App.css';
 import React from 'react';
 import _api from './Tools/Api';
-import { StartPage } from './Pages/StartPage';
+import { LoadingPage } from './Pages/LoadingPage';
 import { ErrorPage } from './Pages/ErrorPage';
 import { NewAccountPage } from './Pages/NewAccountPage'
 import { AccountsPage } from './Pages/AccountsPage';
@@ -19,17 +19,34 @@ export default class App extends React.Component {
  
   constructor(props) {
     super(props);
+    let initData = window.Telegram.WebApp.initData
+    if (initData === "") initData = process.env.REACT_APP_DEV_INITDATA;
+    let decoded = URL.parse("http://example/?" + initData);
+    let userName = JSON.parse(decoded.searchParams.get("user"))["first_name"];
     this.state = {
-      currentPageContent: (<StartPage />)
+      currentPageContent: (<LoadingPage headText={`Приветствую ${userName}!`} loadText="Загружаю данные"/>)
     };
     App.drawPage = this.drawPage;
+    App.drawLoadingPage = this.drawLoadingPage;
+    this.stack = [];
+    App.stackPush = (element) => {
+      this.stack.push(element);
+    }
+    App.stackPop = () => {
+      return this.stack.pop();
+    }
   }
   
+  drawLoadingPage = (headText, loadText) => {
+    this.drawPage(<LoadingPage headText={headText} loadText={loadText}/>);
+  }
+
   drawPage = (pageComponent) => {
     this.setState({
       currentPageContent: pageComponent
     });
   }
+
   componentDidMount = () => {
     if (App.initCalled === false) { // Костыль потому что componentDidMount вызывается 2 раза. (Надо исправить)
                                     // Конструктор кстати тоже вызывается 2 раза 
@@ -37,8 +54,6 @@ export default class App extends React.Component {
       App.initCalled = true;
     }
   }
-  // componentDidUpdate = (prevProps, prevState, snapShot) => {
-  // }
   render = () => {
     return (
       <div className="App">
@@ -58,7 +73,7 @@ export default class App extends React.Component {
             App.Api.Account.getDialogs(phoneNumber)
             .then((response) => {
                 console.log(response);
-                App.drawPage(<DialogsPage app={App} source={response.dialogs} phoneNumber={phoneNumber}/>);
+                this.drawPage(<DialogsPage app={App} source={response.dialogs} phoneNumber={phoneNumber}/>);
             }).catch((ex) => {
                 console.log(ex.message);
             });

@@ -1,0 +1,10 @@
+.backButton {
+    margin-top: 0;
+    background-color: aqua;
+    border-radius: 0;
+    border: 0px solid black;
+    padding-top: auto;
+}
+.backButton:hover {
+    background-color: #00eeee; 
+}

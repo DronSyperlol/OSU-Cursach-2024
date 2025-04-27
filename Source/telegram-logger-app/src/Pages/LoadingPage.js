@@ -3,20 +3,15 @@ import Loading from "../Components/Loading/Loading";
 
 const animationSpeed = 700;
 
-export class StartPage extends React.Component {
+export class LoadingPage extends React.Component {
   constructor(props) {
     super(props);
-    let initData = window.Telegram.WebApp.initData
-    if (initData === "") initData = process.env.REACT_APP_DEV_INITDATA;
-    let decoded = URL.parse("http://example/?" + initData);
-    this.userName = JSON.parse(decoded.searchParams.get("user"))["first_name"];
+    this.state =
+    {
+      animationDots: "."
+    }
   }
   
-  state =
-  {
-    animationDots: "."
-  }
-
   componentDidMount = () => {
     this.setState({
       animationDots: "."
@@ -39,9 +34,9 @@ export class StartPage extends React.Component {
   render = () => {
     return (
       <div>
-        <h3>Приветствую {this.userName}!</h3>
+        <h3>{this.props.headText}</h3>
         <Loading height={250} width={250} />
-        <p>Загружаю данные{this.state.animationDots}</p>
+        <p>{this.props.loadText}{this.state.animationDots}</p>
       </div>);
   }
 }
