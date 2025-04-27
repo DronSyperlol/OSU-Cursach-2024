@@ -55,7 +55,7 @@
   margin-right: auto;
 }
 .messageDeleted {
-  background-color: brown;
+  background-color: rgb(236, 77, 77);
 }
 .messageHeader {
   text-align: left;

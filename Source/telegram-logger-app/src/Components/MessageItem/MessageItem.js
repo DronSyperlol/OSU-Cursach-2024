@@ -13,7 +13,7 @@ export default class MessageItem extends react.Component {
                 return (<this.spec />);
             case "Message":
                 return (<this.message />);
-            case "DeletedMessage":
+            case "MessageDeleted":
                 return (<this.delmsg />);
             default: (<span>unknown type</span>)
         }
@@ -26,8 +26,7 @@ export default class MessageItem extends react.Component {
             title={new Date(this.props.item.logTime)}
             ref={this.props.onRef}>
                 <span>{this.props.item.message}</span>
-            </li>
-        );
+            </li>);
     }
     
     message = () => {
@@ -45,22 +44,25 @@ export default class MessageItem extends react.Component {
                 <div className="messageTime">
                     <span>{this.convertTime(this.props.item.messageDate)}</span>
                 </div>
-            </li>
-        )
+            </li>);
     }
 
     delmsg = () => {
-        <li key={this.props.item.messageId} className={`messageListItem
-            ${this.fromId === -1 ? "senderIsMe" : "senderIsOther"} messageDeleted`}
-            title={new Date(this.props.item.logTime)}
-            ref={this.props.onRef}>
-            <div className="messageHeader">
-                <span>{this.fromId}</span>
-            </div>
-            <div className="messageData">
-                <span>{this.props.item.message}</span>
-            </div>
-        </li>
+        return (
+            <li key={this.props.item.messageId} className={`messageListItem
+                ${this.fromId === -1 ? "senderIsMe" : "senderIsOther"} messageDeleted`}
+                title={new Date(this.props.item.logTime)}
+                ref={this.props.onRef}>
+                <div className="messageHeader">
+                    <span><i>{this.fromId}</i>:</span>
+                </div>
+                <div className="messageData">
+                    <span>{this.props.item.prevChanges[0].message}</span>
+                </div>
+                <div className="messageTime">
+                    <span>{this.convertTime(this.props.item.prevChanges[0].messageDate)}</span>
+                </div>
+            </li>);
     }
 
     convertTime = (unixTimeWithMilliseconds) => {
