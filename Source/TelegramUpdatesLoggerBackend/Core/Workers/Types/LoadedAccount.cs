@@ -26,7 +26,10 @@ namespace Core.Workers.Types
                 return;
             await Client.LoginUserIfNeeded();
             if (Client.User != null)
+            {
                 OnRestarted?.Invoke();
+                Status = Statuses.Logged;
+            }
         }
 
         public void Trigger()
