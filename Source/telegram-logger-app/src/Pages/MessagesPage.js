@@ -60,7 +60,7 @@ export class MessagesPage extends React.Component {
     }
 
     messageSelected = (sender) => {
-        console.log(`messageSelected from ${sender.peerId}`);
+        console.log(`messageSelected from ${sender.messageId}`);
     }
 
 

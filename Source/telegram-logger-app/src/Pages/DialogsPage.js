@@ -36,7 +36,7 @@ export class DialogsPage extends React.Component {
         this.props.app.Api.Target.getSavedLogs(this.props.phoneNumber, sender.peerId)
         .then((response) => {
             console.log(response);
-            this.props.app.drawPage(<MessagesPage app={this.props.app} source={response.logs} loader={this}/>);
+            this.props.app.drawPage(<MessagesPage app={this.props.app} source={response.logs}/>);
         })
         .catch((ex) => {
             console.log(ex.message)

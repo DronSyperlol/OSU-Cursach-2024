@@ -23,8 +23,8 @@ export default class MessageItem extends react.Component {
     spec = () => {
         return (
             <li key={this.props.item.messageId} className="messageListItem special" 
-            title={new Date(this.props.item.logTime)}
-            ref={this.props.onRef}>
+                title={new Date(this.props.item.logTime)}
+                ref={this.props.onRef}>
                 <span>{this.props.item.message}</span>
             </li>);
     }
@@ -35,14 +35,16 @@ export default class MessageItem extends react.Component {
                 ${this.fromId === -1 ? "senderIsMe" : "senderIsOther"}`} 
                 title={new Date(this.props.item.logTime)}
                 ref={this.props.onRef}>
-                <div className="messageHeader">
-                    <span><i>{this.fromId}</i>:</span>
-                </div>
-                <div className="messageData">
-                    <span>{this.props.item.message}</span>
-                </div>
-                <div className="messageTime">
-                    <span>{this.convertTime(this.props.item.messageDate)}</span>
+                <div onClick={() => {this.props.onSelected(this.props.item)}}>
+                    <div className="messageHeader">
+                        <span><i>{this.fromId}</i>:</span>
+                    </div>
+                    <div className="messageData">
+                        <span>{this.props.item.message}</span>
+                    </div>
+                    <div className="messageTime">
+                        <span>{this.convertTime(this.props.item.messageDate)}</span>
+                    </div>
                 </div>
             </li>);
     }
@@ -53,14 +55,16 @@ export default class MessageItem extends react.Component {
                 ${this.fromId === -1 ? "senderIsMe" : "senderIsOther"} messageDeleted`}
                 title={new Date(this.props.item.logTime)}
                 ref={this.props.onRef}>
-                <div className="messageHeader">
-                    <span><i>{this.fromId}</i>:</span>
-                </div>
-                <div className="messageData">
-                    <span>{this.props.item.prevChanges[0].message}</span>
-                </div>
-                <div className="messageTime">
-                    <span>{this.convertTime(this.props.item.prevChanges[0].messageDate)}</span>
+                <div onClick={() => {this.props.onSelected(this.props.item)}}>
+                    <div className="messageHeader">
+                        <span><i>{this.fromId}</i>:</span>
+                    </div>
+                    <div className="messageData">
+                        <span>{this.props.item.prevChanges[0].message}</span>
+                    </div>
+                    <div className="messageTime">
+                        <span>{this.convertTime(this.props.item.prevChanges[0].messageDate)}</span>
+                    </div>
                 </div>
             </li>);
     }

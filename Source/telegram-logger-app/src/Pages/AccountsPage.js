@@ -41,7 +41,7 @@ export class AccountsPage extends React.Component {
         this.props.app.Api.Account.getDialogs(phoneNumber)
         .then((response) => {
             console.log(response);
-            this.props.app.drawPage(<DialogsPage app={this.props.app} source={response.dialogs} phoneNumber={phoneNumber} loader={this}/>);
+            this.props.app.drawPage(<DialogsPage app={this.props.app} source={response.dialogs} phoneNumber={phoneNumber}/>);
         }).catch((ex) => {
             console.log(ex.message);
         });
