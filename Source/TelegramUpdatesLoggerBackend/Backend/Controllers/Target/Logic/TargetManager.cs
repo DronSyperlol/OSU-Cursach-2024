@@ -84,7 +84,15 @@ namespace Backend.Controllers.Target.Logic
                     .Select(l => LogInfo.FromTarget(l.LoggingTarget.PrevTarget!)));
             });
             result.AddRange(targets.DistinctBy(li => li.DbId));
-            return [.. result.OrderByDescending(l => l.LogTime).Take(limit)];
+            return [.. result.Select(l => new
+            {
+                Time = (l.Type == LogInfo.Types.Specifications) ?
+                l.LogTime :
+                (l.MessageDate == null ?
+                    l.PrevChanges?.FirstOrDefault(pl => pl.MessageDate != null)?.MessageDate ?? l.LogTime :
+                    l.MessageDate),
+                LogObj = l
+            }).OrderByDescending(l => l.Time).Select(l => l.LogObj).Take(limit)];
         }
     }
 }
