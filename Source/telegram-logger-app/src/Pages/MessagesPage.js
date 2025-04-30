@@ -2,6 +2,7 @@ import React from "react";
 import MessageItem from "../Components/MessageItem/MessageItem";
 import BackButton from "../Components/BackButton/BackButton";
 import { DialogsPage } from "./DialogsPage";
+import { ChangeHistoryPage } from "./ChangeHistoryPage";
 
 export class MessagesPage extends React.Component {
     static initCalled = false;
@@ -60,6 +61,19 @@ export class MessagesPage extends React.Component {
     }
 
     messageSelected = (sender) => {
+        let toOpen = this.props.source.filter(x => x.messageId === sender.messageId)[0];
+        let convertObject = (toConvert) => {
+            return {
+                fromId: toConvert.fromId,
+                message: toConvert.message,
+                messageId: toConvert.messageId,
+                messageDate: toConvert.messageDate,
+                logTime: toConvert.logTime,
+                type: toConvert.type,
+            }
+        }
+        let source = [convertObject(toOpen)].concat(toOpen.prevChanges.map(x => convertObject(x)));
+        this.props.app.drawPage(<ChangeHistoryPage app={this.props.app} source={source}/>);
         console.log(`messageSelected from ${sender.messageId}`);
     }
 
