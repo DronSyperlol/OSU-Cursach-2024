@@ -1,6 +1,4 @@
-﻿
-
-namespace Backend.Services
+﻿namespace Backend.Services
 {
     public class LoggingService : BackgroundService
     {

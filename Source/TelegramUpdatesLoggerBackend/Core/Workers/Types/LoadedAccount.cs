@@ -1,7 +1,4 @@
-﻿using System.Net.Sockets;
-using System.Threading.Tasks;
-using TL.Methods;
-using WTelegram;
+﻿using WTelegram;
 
 namespace Core.Workers.Types
 {
