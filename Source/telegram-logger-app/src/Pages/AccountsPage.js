@@ -23,7 +23,10 @@ export class AccountsPage extends React.Component {
                 {
                     this.props.source.map(x => <AccountItem item={x} onSelected={this.accountSelected}/>)
                 }
-                <li key="last" className="accountItem addNew" onClick={() => this.props.app.drawPage(<NewAccountPage app={this.props.app}/>)}>
+                <li key="last" className="accountItem addNew" onClick=
+                {
+                    () => this.props.app.drawPage(<NewAccountPage app={this.props.app} onLogged={this.accountSelected}/>)
+                }>
                     <div id="addNewAccountIcon">
                         <img src={plusIcon} alt="add"/>
                     </div>
